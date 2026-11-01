@@ -150,3 +150,15 @@ taken from memory: package versions with `npm view`, runtime features with small
 - **R-13 / R-14** accepted and recorded in the audit log (no UPDATE path to `confirmed` exists; breached-
   password check, password change and email verification deferred to a later version — needs a decision
   from the team).
+
+## R15. Non-blocking erasure checkpoint (N-1, issue #1)
+
+- **Problem**: `wal_checkpoint(TRUNCATE)` waited for the 5 s busy timeout while another connection held a read
+  snapshot (backup, `sqlite3` shell, `npm run purge`), blocking the whole server, then gave up silently and left
+  the erased data in the write-ahead log.
+- **Decision**: run the checkpoint with `busy_timeout = 0` (never blocks), read its result row, and if `busy = 1`
+  retry it in the background every 250 ms (at most 40 attempts, about 10 s), then log a warning. The retry timer
+  is cancelled when the application closes. Backups should use SQLite's online backup API.
+- **Alternatives considered**: a shorter busy timeout (still blocks every request for its duration); a separate
+  worker connection (more moving parts for the same result).
+

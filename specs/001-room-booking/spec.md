@@ -249,6 +249,8 @@ reference the person.
   or display name may remain in the database files afterwards (deleted content is overwritten and
   the write-ahead log is checkpointed). Wrong passwords entered for deletion count towards the
   FR-004 lock. *(Amended after independent review, R-2, R-7, R-10)*
+  The checkpoint MUST NOT block other requests: if another connection is still reading, it is retried
+  in the background until the write-ahead log is clean. *(Amended for N-1, issue #1)*
 - **FR-020**: System MUST record an audit event for: registration, successful and failed sign-in,
   lockout, sign-out, account deletion, role change, room creation/update/service change, and any
   cancellation by an administrator. Audit events MUST NOT contain passwords or session secrets.
