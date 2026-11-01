@@ -104,4 +104,4 @@ A change may be merged to `main` only when all of the following hold:
   justification in the Complexity Tracking section of `plan.md`.
 - Runtime guidance for AI agents lives in `CLAUDE.md` and MUST stay consistent with this document.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-01 | **Last Amended**: 2026-11-01
+**Version**: 1.0.0

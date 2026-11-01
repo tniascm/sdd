@@ -1,9 +1,9 @@
+# Redacted for submission: local paths and run timestamps removed; output otherwise unchanged.
 
  RUN  v5.0.5 <repo>
 
 
  Test Files  9 passed (9)
       Tests  83 passed (83)
-   Start at  19:46:11
    Duration  1.03s (tests 49%, import 44%, transform 6%)
 

@@ -1,3 +1,4 @@
+# Redacted for submission: local paths and run timestamps removed; output otherwise unchanged.
 
 > roombook@1.0.0 test:coverage
 > vitest run --coverage
@@ -9,7 +10,6 @@
 
  Test Files  26 passed (26)
       Tests  303 passed (303)
-   Start at  19:46:12
    Duration  1.43s (tests 65%, import 29%, worker 3%, transform 3%)
 
 [34m % [39m[2mCoverage report from [22m[33mv8[39m

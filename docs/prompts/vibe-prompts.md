@@ -1,21 +1,21 @@
 # Vibe-Coding Prompt Log
 
 AI tool: Claude Code, model `claude-opus-5-5`, run as a fresh sub-agent with **no access to the
-specification** (it never saw `specs/` or the constitution). Every prompt below is verbatim.
+specification** (it never saw `specs/` or the constitution). Every prompt below is verbatim (local paths shortened to `<project>`).
 The text in parentheses is the fixed "workspace rules" wrapper sent with each prompt so the agent
 stayed inside its folder; it carries no product requirements.
 
-| ID | Time (EET) | Purpose |
-|----|------------|---------|
-| V1 | 2026-11-01 17:41 | Single-line prompt, as in the "Vibe Coding Lifecycle" (prompt → solution based on assumptions) |
-| V2 | 2026-11-01 17:51 | Review-and-feedback prompt after trying V1 (feature gaps found by use) |
+| ID | Purpose |
+|----|---------|
+| V1 | Single-line prompt, as in the "Vibe Coding Lifecycle" (prompt → solution based on assumptions) |
+| V2 | Review-and-feedback prompt after trying V1 (feature gaps found in review) |
 
 ## V1 — initial prompt
 
 ```text
 Build a web app where students at our university can book study rooms. Use Node.js. Keep it simple and make it work.
 
-(Workspace rules: work only inside <repo>/vibe-prototype — do not touch anything outside that folder and do not run git commands. Don't ask me questions; make whatever assumptions you need. When you're done, tell me how to run it and briefly what you built.)
+(Workspace rules: work only inside <project>/vibe-prototype — do not touch anything outside that folder and do not run git commands. Don't ask me questions; make whatever assumptions you need. When you're done, tell me how to run it and briefly what you built.)
 ```
 
 Expectation: a runnable app with a room list and a booking form. Deliberately no mention of
@@ -50,7 +50,7 @@ unacceptable to the facilities stakeholder, and nothing forced that decision to 
 ```text
 Looks good! A few things from trying it: the facilities office needs an admin page to add rooms and close a room for maintenance without wiping everyone's data; only @uni.example emails should be able to sign up; people should be able to download their data and delete their account (GDPR). Also stop people guessing passwords.
 
-(Workspace rules: work only inside <repo>/vibe-prototype — do not create, modify or delete anything outside that folder, including files written by tools you use (e.g. browser-automation logs); prefer curl and your test suite for checking. No git commands. Don't ask me questions. When done, tell me what changed and how to run it.)
+(Workspace rules: work only inside <project>/vibe-prototype — do not create, modify or delete anything outside that folder, including files written by tools you use (e.g. browser-automation logs); prefer curl and your test suite for checking. No git commands. Don't ask me questions. When done, tell me what changed and how to run it.)
 ```
 
 Refinement made to the *wrapper* after V1's failure: the rule now explicitly covers files written

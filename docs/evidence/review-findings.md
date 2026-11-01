@@ -1,8 +1,8 @@
 # Independent review: RoomBook (spec 001), release gate SC-005
 
-Reviewer: a fresh AI reviewer with no part in the implementation, 2026-11-01, commit `7cd4343`. Scope: `src/`, `public/`, `scripts/`, `src/cli/`
+Reviewer: a fresh AI reviewer with no part in the implementation, at commit `7cd4343`. Scope: `src/`, `public/`, `scripts/`, `src/cli/`
 (`vibe-prototype/` excluded). Baseline: 277/277 tests green. Probes p1–p6 are throw-away scripts kept outside the repo
-(`<tmp>`). Each finding below states its reproduction.
+(a temporary folder outside the repository). Each finding below states its reproduction.
 
 ## Findings
 
@@ -45,7 +45,7 @@ Reviewer: a fresh AI reviewer with no part in the implementation, 2026-11-01, co
 
 **Not met.** R-1 is an open high-severity issue. The specified brute-force control fails under ordinary concurrency, which is broken authentication (OWASP API2). The constitution's Principle IV names this explicitly. Re-review after R-1 is fixed and a concurrent regression test is in place. Before release, R-2, R-3 and R-4 should be fixed or formally accepted in `docs/evidence/audit-log.md`. Until R-2 is fixed, SC-006 is not met either.
 
-## Re-review (2026-11-01, branch `001-room-booking` at `8a11e5b`)
+## Re-review (branch `001-room-booking` at `8a11e5b`)
 
 Same reviewer, my own probes rather than the new tests. The suite is green (303/303), and no existing assertion was weakened (only additions). New probes p7–p11 are in the same scratchpad folder. R-1 and R-7 were run on a real HTTP server with production scrypt (N=2^15, r=8, p=3), the real clock and 300 req/min. R-2 was checked on a file database in WAL mode, without any manual checkpoint. R-11 was checked in a real browser.
 

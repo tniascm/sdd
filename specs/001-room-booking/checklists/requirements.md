@@ -1,7 +1,6 @@
 # Specification Quality Checklist: RoomBook — Campus Study-Room Booking
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-11-01
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -13,7 +12,7 @@
 
 ## Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain — resolved by `/speckit-clarify` session 2026-11-01
+- [x] No [NEEDS CLARIFICATION] markers remain — resolved by `/speckit-clarify` session 1
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)

@@ -2,15 +2,13 @@
 
 **Feature Branch**: `001-room-booking`
 
-**Created**: 2026-11-01
-
 **Status**: Clarified
 
 **Input**: User description: "Build RoomBook, a web application and HTTP API that lets members of a university book shared study rooms. Actors: students, staff, facilities administrators. Students and staff register with their university email address and a password, sign in, browse rooms (name, building, capacity, equipment), see a room's free and booked times for a given day, book a room for a time slot, see their upcoming bookings and cancel them. Booking rules: bookings are in 30-minute steps inside opening hours (08:00–22:00 campus time), cannot start in the past, cannot overlap another booking of the same room, party size cannot exceed room capacity, and students have tighter limits than staff on booking length, how far ahead they can book and how many upcoming bookings they can hold. Facilities administrators manage rooms (add, edit, take out of service) and can see and cancel any booking. Because the system stores personal data of EU users, users can download their data and delete their account. Repeated failed sign-ins must be throttled, and security-relevant events must be audit-logged."
 
 ## Clarifications
 
-### Session 2026-11-01
+### Session 1
 
 Answers were given autonomously by the orchestrating agent acting as product owner, choosing the
 option `/speckit-clarify` itself recommended; the team should review them.

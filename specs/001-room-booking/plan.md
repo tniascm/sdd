@@ -1,6 +1,6 @@
 # Implementation Plan: RoomBook — Campus Study-Room Booking
 
-**Branch**: `001-room-booking` | **Date**: 2026-11-01 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-room-booking` | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-room-booking/spec.md`
 

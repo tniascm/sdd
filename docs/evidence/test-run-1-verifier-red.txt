@@ -1,3 +1,4 @@
+# Redacted for submission: local paths and run timestamps removed; output otherwise unchanged.
 
  RUN  v5.0.5 <repo>
 
@@ -571,6 +572,5 @@ TypeError: Cannot read properties of undefined (reading 'close')
 
  Test Files  8 failed (8)
       Tests  71 failed (71)
-   Start at  18:56:23
    Duration  525ms (import 71%, tests 18%, transform 10%, worker 1%)
 

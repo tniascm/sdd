@@ -69,8 +69,8 @@ reviewer) were played by the orchestrating agent; the <mark>**human sign-off at 
 
 ## 5. Re-review and verdict
 
-Re-review by the same independent reviewer, with its own probes rather than the new tests, on
-2026-11-01 (details: `docs/evidence/review-findings.md`, section "Re-review"):
+Re-review by the same independent reviewer, with its own probes rather than the new tests
+(details: `docs/evidence/review-findings.md`, section "Re-review"):
 
 **Verdict: SC-005 MET** — no High-severity issue open. SC-006 holds in normal operation.
 

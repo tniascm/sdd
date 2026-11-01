@@ -1,4 +1,4 @@
-## Specification Analysis Report — `/speckit-analyze` (run 2026-11-01, before implementation)
+## Specification Analysis Report — `/speckit-analyze` (run before implementation)
 
 Artifacts: spec.md, plan.md, tasks.md, research.md, data-model.md, contracts/openapi.yaml, constitution v1.0.0.
 Method: requirement-ID inventory (FR/NFR/SC) mapped to tasks by explicit ID, then by keyword for

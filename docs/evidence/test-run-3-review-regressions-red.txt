@@ -1,3 +1,4 @@
+# Redacted for submission: local paths and run timestamps removed; output otherwise unchanged.
 
  RUN  v5.0.5 <repo>
 
@@ -64,7 +65,7 @@ AssertionError: expected 29 to be less than or equal to 5
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
 
  FAIL  tests/acceptance/review-regressions.test.ts > R-2 / R-10 — FR-019, SC-006: erasure leaves no personal data in the database files > after erasure and shutdown, neither the email nor the display name is in the .db or -wal file
-AssertionError: <tmp> contains the email: expected true to be false // Object.is equality
+AssertionError: <tmp>/roombook-erase-0HpMdR/test.db contains the email: expected true to be false // Object.is equality
 
 - Expected
 + Received
@@ -226,6 +227,5 @@ AssertionError: expected null not to be null
 
  Test Files  1 failed (1)
       Tests  12 failed (12)
-   Start at  19:35:20
    Duration  479ms (tests 47%, import 43%, transform 10%)
 

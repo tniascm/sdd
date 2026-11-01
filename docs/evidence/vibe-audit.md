@@ -1,7 +1,7 @@
 # Independent audit: vibe-prototype vs. spec 001-room-booking
 
-**Date:** 2026-11-01, 18:42–18:55 EET. `vibe-prototype/` itself was not changed (`diff -rq` against the audited copy is empty).
-**Method:** I ran a scratch copy with `PORT=3901 TZ=Europe/Helsinki node src/server.js` (Node 26.8.2) and probed it with `curl`, cookie jars and CSRF tokens scraped from the forms. Three `fetch` scripts covered races, time zones and load: `race.mjs`, `dst.mjs`, `perf.mjs`. Admin rights came from `node scripts/make-admin.js`. The app cannot create past bookings, so for US5-2 one past booking was inserted straight into the copy's SQLite file. "Tomorrow" means 2026-11-02.
+`vibe-prototype/` itself was not changed (`diff -rq` against the audited copy is empty).
+**Method:** I ran a scratch copy with `PORT=3901 TZ=Europe/Helsinki node src/server.js` (Node 26.8.2) and probed it with `curl`, cookie jars and CSRF tokens scraped from the forms. Three `fetch` scripts covered races, time zones and load: `race.mjs`, `dst.mjs`, `perf.mjs`. Admin rights came from `node scripts/make-admin.js`. The app cannot create past bookings, so for US5-2 one past booking was inserted straight into the copy's SQLite file.
 **Verdicts:** *Pass* means every clause is met. *Partial* means some clauses are met. *Fail* means the central outcome is contradicted. *Not implemented* means the function is absent.
 
 ## 1. Summary
@@ -25,7 +25,7 @@ There are no High-severity findings and 5 Medium ones.
 | US1-1 | Partial | Room 3 (6 seats), tomorrow 10:00–11:00 → `302 /my?ok=booked`, listed in /my. Party size does not exist: there is no form field and no column (db.js:34-43), and `party_size=40` for a 2-seat room → 302. | drift |
 | US1-2 | Pass | 10:30–11:30 by Bob → 409 "Sorry, that room is already booked for part of that time." (bookings.js:156-161) | – |
 | US1-3 | Pass | 11:00–12:00 by Bob → 302 | – |
-| US1-4 | Partial | Yesterday or today 17:00 → 400 "That time has already passed."; 10:15 → "valid start time"; 21:30+60 → "between 08:00 and 22:00". Party size is unchecked. A past start inside the current slot is accepted: at 18:44, 18:30–19:00 → 302 (bookings.js:31-35, 143). | drift |
+| US1-4 | Partial | A start earlier today or yesterday → 400 "That time has already passed."; 10:15 → "valid start time"; 21:30+60 → "between 08:00 and 22:00". Party size is unchecked. A past start inside the current slot is accepted: 14 minutes into a slot, booking that slot → 302 (bookings.js:31-35, 143). | drift |
 | US1-5 | Pass | 4th booking → 409 "You can hold at most 3 upcoming bookings" (bookings.js:170-178) | – |
 | US1-6 | Fail | 150 min → 400 "at most 2 h". 8 and 14 days ahead → 302 (window 14 days, config.js:35). There is no staff role, only `is_admin` (db.js:51), so a 240-min request → 400 and admins get student limits. | drift |
 | US1-7 | Pass | Bob's grid shows "Booked 10:00–11:00", with 0 occurrences of other bookers' names and no booking ids (bookings.js:66-73) | – |
@@ -35,11 +35,11 @@ There are no High-severity findings and 5 Medium ones.
 | US2-4 | Partial | After 5 failures, a 6th attempt with the correct password → 429 "Please wait 15 minutes". The lock counts from the *first* failure (auth.js:138); a later lock said "wait 12 minutes". There is no audit log (7 tables, none for audit). | drift |
 | US2-5 | Pass | After logout, replaying the saved cookie → 302 /login (app.js:212-216) | – |
 | US3-1 | Partial | Cancel → `/my?ok=cancelled`; the slot can be booked again and the quota is restored. The row is DELETEd (bookings.js:193) and there is no status column, so nothing is "marked cancelled". | drift |
-| US3-2 | Fail | Booking 18:30–19:00 made at 18:44 and then cancelled → `/my?ok=cancelled`. Cancelling is allowed until the booking ends (bookings.js:96, 193). | drift |
+| US3-2 | Fail | A booking for the current slot, made 14 minutes after it started, then cancelled → `/my?ok=cancelled`. Cancelling is allowed until the booking ends (bookings.js:96, 193). | drift |
 | US3-3 | Pass | Alice → Bob's #2 and Alice → nonexistent #99999 both return `302 /my?err=cancel_failed` with byte-identical bodies; #2 is unchanged (bookings.js:193) | – |
 | US4-1 | Pass | Admin adds "Lab 7" (Science Building, 8 seats, projector) → 302 and it is visible to students. Off-spec: capacity 500 and free-text equipment are accepted (rooms.js:17-21). | – |
 | US4-2 | Pass | Student: GET /admin, POST /admin/rooms, `/admin/rooms/1/close` and `/admin/closures/1/delete` → 403 (app.js:120-128) | – |
-| US4-3 | Partial | Closing room 3 with reason "Room taken out of service" → `n=3`; later bookings → 409; owners get a notice. Frank's in-progress booking (18:30–19:00, closed at 18:45) was also cancelled (rooms.js:104). Bookings are deleted, and the room stays in the grid and in the /book list. | drift |
+| US4-3 | Partial | Closing room 3 with reason "Room taken out of service" → `n=3`; later bookings → 409; owners get a notice. Frank's in-progress booking (closed 15 minutes into the booking) was also cancelled (rooms.js:104). Bookings are deleted, and the room stays in the grid and in the /book list. | drift |
 | US4-4 | Not impl. | `/admin/bookings` → 404; no booker names on any admin page (route list app.js:161-392) | drift |
 | US4-5 | Not impl. | No staff role and no role UI; the admin flag can only be set from the shell (users.js:6-11) | drift |
 | US5-1 | Pass | `/account/export` returns a JSON attachment with the profile and bookings and no other user's name or email. It also exports IPs of failed sign-ins to the account (users.js:37,58). | – |
@@ -84,7 +84,7 @@ These checks found nothing wrong:
 
 ## 5. Other defects
 
-- **D1 (Medium): time zone.** Campus time is the host process's time zone (config.js:22, time.js:5-11), and bookings are stored as local date plus minutes with no zone (db.js:33-40). With `TZ=UTC` (`dst.mjs`, clock at 18:50 Helsinki time), 17:00 (already past on campus) and 21:30 (23:30 Helsinki) were both accepted. Restarting under another TZ shifts every booking without warning.
+- **D1 (Medium): time zone.** Campus time is the host process's time zone (config.js:22, time.js:5-11), and bookings are stored as local date plus minutes with no zone (db.js:33-40). With `TZ=UTC` (`dst.mjs`, evening clock in Helsinki), a start almost two hours in the past on campus and 21:30 (23:30 Helsinki, after closing) were both accepted. Restarting under another TZ shifts every booking without warning.
 - **D2 (Low):** closures and account deletion physically delete bookings (rooms.js:109-117, db.js:37), so no usage history or record of who cancelled remains.
 - **D3 (Low): erasure residue.** Just after the deletion, `dave@uni.example` still appeared 19 times in `audit.db-wal`, so SC-006 fails on a raw search.
 - **D4 (Low): booking ids are reused** (no AUTOINCREMENT). Erin's cancelled #9 became Frank's #9; the owner check prevents harm.

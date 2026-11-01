@@ -1,6 +1,6 @@
 # Phase 0 Research: RoomBook
 
-All entries were checked on the development machine on 2026-11-01 (macOS, Apple Silicon) rather than
+All entries were checked on the development machine (macOS) rather than
 taken from memory: package versions with `npm view`, runtime features with small `node -e` probes.
 
 ## R1. Runtime and language

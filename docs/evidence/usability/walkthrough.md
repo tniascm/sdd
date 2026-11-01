@@ -1,6 +1,6 @@
 # T055 — Usability walkthrough (NFR-007, SC-002)
 
-**When / where:** 2026-11-01 19:23–19:26 EET, real server (`node src/server.ts`, fresh database
+**Where:** real server (`node src/server.ts`, fresh database
 seeded with `scripts/seed.ts`), Chromium driven by Playwright, viewport **360 × 740 px**.
 **Method:** keyboard only — focus moved with `Tab`/`Shift+Tab`, actions with `Enter`, text entered into
 the *focused* field (Playwright `fill`), select values by type-ahead. No pointer events were used.

@@ -46,7 +46,7 @@ step as the lock check, and removed again if the password turns out to be correc
 attempts cannot exceed the limit *(amended after review finding R-1)*. A successful sign-in deletes
 the account's failures. Attempts refused *because of* the
 lock are not checked and not recorded as failures (otherwise a retrying user would stay locked
-forever); each refusal is audit-logged as `auth.locked`. *(Amended 2026-11-01 by the Verifier
+forever); each refusal is audit-logged as `auth.locked`. *(Amended by the Verifier
 while writing US2-4 — the original text did not say whether refused attempts count.)*
 
 ## Room
