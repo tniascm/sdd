@@ -17,6 +17,19 @@
 /* `hidden` must win over any display rule (signed-out and admin-only elements). */
 [hidden] { display: none !important; }
 
+/* Present for password managers and the accessibility tree, invisible on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   margin: 0;
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

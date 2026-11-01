@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RoomBook</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -159,7 +160,10 @@
           <form id="erase-form" class="card" novalidate>
             <h3>Delete my account</h3>
             <p>Your upcoming bookings are cancelled, your profile is erased and past bookings stay only as anonymous room-usage records. This cannot be undone.</p>
+            <p>Account: <strong id="erase-account"></strong></p>
             <p class="form-error" data-error-for="_form"></p>
+            <!-- U-4: tells password managers which account this password belongs to -->
+            <input id="erase-username" name="username" type="text" autocomplete="username" readonly tabindex="-1" aria-hidden="true" class="visually-hidden">
             <label for="erase-password">Confirm with your password</label>
             <input id="erase-password" name="password" type="password" autocomplete="current-password" required>
             <p class="field-error" data-error-for="password"></p>

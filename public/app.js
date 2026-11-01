@@ -3,12 +3,16 @@
 
 const API = '/api/v1';
 const TOKEN_KEY = 'roombook.token';
+/** NFR-007 (U-2): one fixed English format for every date and time, independent of the browser. */
+const LOCALE = 'en-GB';
 
 const state = {
   token: readToken(),
   user: null,
-  /** Campus time zone, learned from the first availability response (the server's CAMPUS_TIME_ZONE). */
-  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  /** Campus time zone (the server's CAMPUS_TIME_ZONE), loaded from /health before anything is shown (R-11). */
+  timeZone: 'UTC',
+  /** Half-hour times of the opening window of the shown availability ("HH:MM"). */
+  slots: [],
   /** The room currently open in the booking section. */
   room: null,
 };
@@ -151,6 +155,8 @@ function signedIn(user) {
   $('#app-view').hidden = false;
   $('#session-bar').hidden = false;
   $('#session-user').textContent = `${user.displayName} (${user.role})`;
+  $('#erase-username').value = user.email;
+  $('#erase-account').textContent = user.email;
   for (const node of document.querySelectorAll('[data-admin-only]')) node.hidden = user.role !== 'admin';
   for (const handler of signedInHandlers) handler(user);
 }
@@ -171,12 +177,14 @@ function signedOut(message) {
   }
   for (const list of document.querySelectorAll('#app-view ul, #app-view tbody')) list.replaceChildren();
   $('#book-section').hidden = true;
+  $('#erase-account').textContent = '';
   state.room = null;
   setStatus(message || '');
 }
 
 onSubmit($('#login-form'), async (values, form) => {
   const session = await api('POST', '/auth/login', { email: values.email, password: values.password });
+  await campusTimeZone;
   state.token = session.token;
   writeToken(session.token);
   form.reset();
@@ -237,11 +245,11 @@ function campusDate(instant, timeZone) {
 }
 
 function formatTime(isoString) {
-  return new Date(isoString).toLocaleTimeString(undefined, { timeZone: state.timeZone, hour: '2-digit', minute: '2-digit' });
+  return new Date(isoString).toLocaleTimeString(LOCALE, { timeZone: state.timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 }
 
 function formatDate(isoString) {
-  return new Date(isoString).toLocaleDateString(undefined, {
+  return new Date(isoString).toLocaleDateString(LOCALE, {
     timeZone: state.timeZone, weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
   });
 }
@@ -370,17 +378,31 @@ function renderAvailability(a) {
   render($('#booked-list'), a.booked, 'Nothing booked yet.');
 
   const start = $('#booking-start');
-  const end = $('#booking-end');
-  const previous = { start: start.value, end: end.value };
-  const options = (select, times) => select.replaceChildren(...times.map((t) => el('option', { value: t, text: t })));
-  const slots = halfHours(a.opens, a.closes);
-  options(start, slots.slice(0, -1));
-  options(end, slots.slice(1));
-  if (previous.start && slots.includes(previous.start)) start.value = previous.start;
-  if (previous.end && slots.includes(previous.end)) end.value = previous.end;
-  else end.selectedIndex = Math.min(start.selectedIndex + 1, end.options.length - 1);
+  const previous = { start: start.value, end: $('#booking-end').value };
+  state.slots = halfHours(a.opens, a.closes);
+  start.replaceChildren(...state.slots.slice(0, -1).map((t) => el('option', { value: t, text: t })));
+  if (previous.start && state.slots.includes(previous.start)) start.value = previous.start;
+  fillEndTimes(previous.end);
   $('#booking-form').dataset.date = a.date;
 }
+
+/**
+ * NFR-007 (U-1): End offers only times after Start; preselects `preferred` if still possible,
+ * otherwise Start + 1 hour, otherwise the last slot of the day.
+ */
+function fillEndTimes(preferred) {
+  const startTime = $('#booking-start').value;
+  const end = $('#booking-end');
+  const later = state.slots.filter((t) => t > startTime);
+  end.replaceChildren(...later.map((t) => el('option', { value: t, text: t })));
+  const [h, m] = startTime.split(':').map(Number);
+  const plusHour = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  if (preferred && later.includes(preferred)) end.value = preferred;
+  else if (later.includes(plusHour)) end.value = plusHour;
+  else if (later.length) end.value = later[later.length - 1];
+}
+
+$('#booking-start').addEventListener('change', () => fillEndTimes());
 
 onSubmit($('#availability-form'), () => loadAvailability());
 
@@ -696,14 +718,26 @@ signedInHandlers.push((user) => {
 // ------------------------------------------------------------------ formatting
 
 function formatDateTime(isoString) {
-  return new Date(isoString).toLocaleString(undefined, {
-    timeZone: state.timeZone, weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  return new Date(isoString).toLocaleString(LOCALE, {
+    timeZone: state.timeZone, weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   });
 }
 
 // ------------------------------------------------------------------ start
 
+/** R-11: the campus time zone is known before any date or time is shown. */
+const campusTimeZone = fetch(`${API}/health`)
+  .then((res) => (res.ok ? res.json() : null))
+  .then((health) => {
+    if (health && typeof health.timeZone === 'string') state.timeZone = health.timeZone;
+  })
+  .catch(() => {
+    setStatus('Could not load the campus time zone; times are shown in UTC.', true);
+  });
+
 async function start() {
+  await campusTimeZone;
   if (!state.token) return signedOut();
   try {
     signedIn(await api('GET', '/me'));
