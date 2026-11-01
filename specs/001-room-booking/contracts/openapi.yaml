@@ -1,0 +1,760 @@
+openapi: 3.1.0
+info:
+  title: RoomBook API
+  version: 1.0.0
+  description: |
+    Campus study-room booking (spec 001-room-booking). All times are ISO 8601 UTC.
+    Campus-local rules (opening hours, dates) use the server's configured IANA time zone.
+    Every error body has the shape of `Error`. Every response object rejects unknown
+    properties so that contract tests detect accidental data leaks.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: me
+  - name: rooms
+  - name: bookings
+  - name: admin
+
+paths:
+  /health:
+    get:
+      tags: [auth]
+      summary: Liveness probe
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status, timeZone]
+                properties:
+                  status: { const: ok }
+                  timeZone: { type: string, description: 'Campus IANA time zone, used by the UI to show campus time (R-11)' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new account (FR-001)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Account created (role student)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Sign in (FR-002, FR-004)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Sign out — revoke the current session (FR-003)
+      responses:
+        '204': { description: Signed out }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /me:
+    get:
+      tags: [me]
+      summary: Current user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /me/export:
+    get:
+      tags: [me]
+      summary: Export my personal data (FR-018)
+      responses:
+        '200':
+          description: All personal data held about the caller
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataExport' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /me/erase:
+    post:
+      tags: [me]
+      summary: Delete my account (FR-019)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EraseRequest' }
+      responses:
+        '204': { description: Account erased }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /rooms:
+    get:
+      tags: [rooms]
+      summary: List rooms in service (FR-005)
+      parameters:
+        - name: minCapacity
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50 }
+        - name: building
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 60 }
+        - name: equipment
+          in: query
+          description: Comma-separated list; rooms must have all of them.
+          schema: { type: string, pattern: '^[a-z-]+(,[a-z-]+)*$' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoomList' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+    post:
+      tags: [rooms, admin]
+      summary: Create a room (FR-007, admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /rooms/{roomId}:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    patch:
+      tags: [rooms, admin]
+      summary: Edit room details (FR-007, admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /rooms/{roomId}/out-of-service:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [rooms, admin]
+      summary: Take a room out of service; cancels its future bookings (FR-008, FR-016)
+      responses:
+        '200':
+          description: Room is out of service
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [room, cancelledBookings]
+                properties:
+                  room: { $ref: '#/components/schemas/Room' }
+                  cancelledBookings: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /rooms/{roomId}/in-service:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [rooms, admin]
+      summary: Put a room back in service (FR-008)
+      responses:
+        '200':
+          description: Room is in service
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [room]
+                properties:
+                  room: { $ref: '#/components/schemas/Room' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /rooms/{roomId}/availability:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    get:
+      tags: [rooms]
+      summary: Booked and free intervals of a room on a campus-local date (FR-006)
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date, pattern: '^20\d{2}-\d{2}-\d{2}$' }
+      responses:
+        '200':
+          description: OK (no booker identity — NFR-009)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Availability' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /bookings:
+    post:
+      tags: [bookings]
+      summary: Book a room (FR-009 … FR-012)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingCreate' }
+      responses:
+        '201':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /bookings/mine:
+    get:
+      tags: [bookings]
+      summary: My bookings in start order (FR-013)
+      parameters:
+        - name: include
+          in: query
+          schema: { type: string, enum: [upcoming, all], default: upcoming }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookingList' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /bookings/{bookingId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    post:
+      tags: [bookings]
+      summary: Cancel a booking (FR-014 owner; FR-015 admin, reason required for others' bookings)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelRequest' }
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /admin/rooms:
+    get:
+      tags: [admin]
+      summary: All rooms including those out of service
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoomList' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /admin/bookings:
+    get:
+      tags: [admin]
+      summary: All bookings on a campus-local date with booker identity (FR-015)
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date, pattern: '^20\d{2}-\d{2}-\d{2}$' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminBookingList' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /admin/users:
+    get:
+      tags: [admin]
+      summary: Find users by email fragment (max 100)
+      parameters:
+        - name: email
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 254 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /admin/users/{userId}/role:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [admin]
+      summary: Change a user's role (FR-017)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /admin/audit-events:
+    get:
+      tags: [admin]
+      summary: Audit events, newest first (FR-020)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: beforeId
+          in: query
+          description: Return events with id lower than this (pagination).
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items: { $ref: '#/components/schemas/AuditEvent' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Opaque session token from POST /auth/login (expires after 8 h).
+
+  parameters:
+    RoomId:
+      name: roomId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    ValidationFailed:
+      description: Request does not match the contract (code VALIDATION_FAILED); details name each field.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthenticated:
+      description: Missing/invalid/expired session (UNAUTHENTICATED) or wrong credentials (INVALID_CREDENTIALS).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Caller lacks the role (FORBIDDEN) or re-entered a wrong password (PASSWORD_INCORRECT).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Object does not exist or belongs to someone else (NOT_FOUND).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: EMAIL_TAKEN, ROOM_NAME_TAKEN, SLOT_UNAVAILABLE or LAST_ADMIN.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RuleViolation:
+      description: |
+        A business rule failed. Codes: EMAIL_DOMAIN_NOT_ALLOWED, PASSWORD_EQUALS_EMAIL, IN_PAST,
+        NOT_ON_SLOT_BOUNDARY, TOO_SHORT, TOO_LONG, OUTSIDE_OPENING_HOURS, TOO_FAR_AHEAD,
+        QUOTA_REACHED, PARTY_TOO_LARGE, ROOM_OUT_OF_SERVICE, ALREADY_STARTED, ALREADY_ENDED,
+        ALREADY_CANCELLED, REASON_REQUIRED.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: TOO_MANY_ATTEMPTS (sign-in lockout) or RATE_LIMITED (NFR-010, applies to every operation); see the Retry-After header (seconds).
+      headers:
+        Retry-After:
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Role:
+      type: string
+      enum: [student, staff, admin]
+    Equipment:
+      type: string
+      enum: [whiteboard, projector, display-screen, video-conferencing]
+    Timestamp:
+      type: string
+      format: date-time
+      pattern: 'Z$'
+
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, displayName, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        displayName: { type: string, minLength: 1, maxLength: 60 }
+        password: { type: string, minLength: 12, maxLength: 128 }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, minLength: 1, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    EraseRequest:
+      type: object
+      additionalProperties: false
+      required: [password]
+      properties:
+        password: { type: string, minLength: 1, maxLength: 128 }
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, email, displayName, role, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    Session:
+      type: object
+      additionalProperties: false
+      required: [token, expiresAt, user]
+      properties:
+        token: { type: string, minLength: 32 }
+        expiresAt: { $ref: '#/components/schemas/Timestamp' }
+        user: { $ref: '#/components/schemas/User' }
+
+    Room:
+      type: object
+      additionalProperties: false
+      required: [id, name, building, capacity, equipment, inService]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        building: { type: string }
+        capacity: { type: integer, minimum: 1, maximum: 50 }
+        equipment:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Equipment' }
+        inService: { type: boolean }
+    RoomList:
+      type: object
+      additionalProperties: false
+      required: [rooms]
+      properties:
+        rooms:
+          type: array
+          items: { $ref: '#/components/schemas/Room' }
+    RoomCreate:
+      type: object
+      additionalProperties: false
+      required: [name, building, capacity]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        building: { type: string, minLength: 1, maxLength: 60 }
+        capacity: { type: integer, minimum: 1, maximum: 50 }
+        equipment:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Equipment' }
+          default: []
+    RoomUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        building: { type: string, minLength: 1, maxLength: 60 }
+        capacity: { type: integer, minimum: 1, maximum: 50 }
+        equipment:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Equipment' }
+
+    Interval:
+      type: object
+      additionalProperties: false
+      required: [start, end]
+      properties:
+        start: { $ref: '#/components/schemas/Timestamp' }
+        end: { $ref: '#/components/schemas/Timestamp' }
+    Availability:
+      type: object
+      additionalProperties: false
+      required: [roomId, date, timeZone, opens, closes, booked, free]
+      properties:
+        roomId: { type: string, format: uuid }
+        date: { type: string, format: date }
+        timeZone: { type: string, examples: [Europe/Helsinki] }
+        opens: { type: string, pattern: '^\d{2}:\d{2}$' }
+        closes: { type: string, pattern: '^\d{2}:\d{2}$' }
+        booked:
+          type: array
+          items: { $ref: '#/components/schemas/Interval' }
+        free:
+          type: array
+          items: { $ref: '#/components/schemas/Interval' }
+
+    BookingCreate:
+      type: object
+      additionalProperties: false
+      required: [roomId, start, end, partySize]
+      properties:
+        roomId: { type: string, format: uuid }
+        start: { $ref: '#/components/schemas/Timestamp' }
+        end: { $ref: '#/components/schemas/Timestamp' }
+        partySize: { type: integer, minimum: 1, maximum: 50 }
+        purpose: { type: string, maxLength: 100 }
+    CancelRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 200 }
+    BookingBase:
+      type: object
+      required: [id, roomId, roomName, start, end, partySize, purpose, status, cancelledAt, cancelledBy, cancelReason, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        roomId: { type: string, format: uuid }
+        roomName: { type: string }
+        start: { $ref: '#/components/schemas/Timestamp' }
+        end: { $ref: '#/components/schemas/Timestamp' }
+        partySize: { type: integer, minimum: 1 }
+        purpose: { type: [string, 'null'] }
+        status: { type: string, enum: [confirmed, cancelled] }
+        cancelledAt:
+          oneOf:
+            - { $ref: '#/components/schemas/Timestamp' }
+            - { type: 'null' }
+        cancelledBy: { type: [string, 'null'], enum: [owner, admin, system, null] }
+        cancelReason: { type: [string, 'null'] }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    Booking:
+      allOf:
+        - $ref: '#/components/schemas/BookingBase'
+      unevaluatedProperties: false
+    BookingList:
+      type: object
+      additionalProperties: false
+      required: [bookings]
+      properties:
+        bookings:
+          type: array
+          items: { $ref: '#/components/schemas/Booking' }
+    AdminBooking:
+      allOf:
+        - $ref: '#/components/schemas/BookingBase'
+      type: object
+      unevaluatedProperties: false
+      required: [booker]
+      properties:
+        booker:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [userId, displayName, email]
+              properties:
+                userId: { type: string, format: uuid }
+                displayName: { type: string }
+                email: { type: string, format: email }
+            - type: 'null'
+    AdminBookingList:
+      type: object
+      additionalProperties: false
+      required: [date, timeZone, bookings]
+      properties:
+        date: { type: string, format: date }
+        timeZone: { type: string }
+        bookings:
+          type: array
+          items: { $ref: '#/components/schemas/AdminBooking' }
+
+    DataExport:
+      type: object
+      additionalProperties: false
+      required: [exportedAt, user, bookings]
+      properties:
+        exportedAt: { $ref: '#/components/schemas/Timestamp' }
+        user: { $ref: '#/components/schemas/User' }
+        bookings:
+          type: array
+          items: { $ref: '#/components/schemas/Booking' }
+
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [id, at, actorUserId, action, targetType, targetId, details]
+      properties:
+        id: { type: integer, minimum: 1 }
+        at: { $ref: '#/components/schemas/Timestamp' }
+        actorUserId: { type: [string, 'null'] }
+        action: { type: string }
+        targetType: { type: [string, 'null'] }
+        targetId: { type: [string, 'null'] }
+        details: { type: object }
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: { type: string, pattern: '^[A-Z_]+$' }
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [field, message]
+                properties:
+                  field: { type: string }
+                  message: { type: string }

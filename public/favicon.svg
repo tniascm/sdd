@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="RoomBook">
+  <rect x="3" y="5" width="26" height="24" rx="3" fill="#1f5fbf"/>
+  <rect x="3" y="5" width="26" height="7" rx="3" fill="#174a96"/>
+  <rect x="9" y="2" width="3" height="7" rx="1.5" fill="#174a96"/>
+  <rect x="20" y="2" width="3" height="7" rx="1.5" fill="#174a96"/>
+  <path d="M10 20.5l4 4 8-9" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

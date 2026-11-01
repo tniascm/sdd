@@ -1,0 +1,231 @@
+
+ RUN  v5.0.5 <repo>
+
+stderr | tests/acceptance/review-regressions.test.ts > R-8 — NFR-004: out-of-range dates are invalid input, never a 500 > years outside 2000–2099 give 400
+RangeError: invalid date: 0050-01-01
+    at parseLocalDate (<repo>/src/domain/campus-time.ts:79:11)
+    at RoomService.availability (<repo>/src/application/room-service.ts:62:5)
+    at <repo>/src/http/routes/rooms.ts:42:23
+    at Layer.handleRequest (<repo>/node_modules/router/lib/layer.js:152:17)
+    at next (<repo>/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (<repo>/node_modules/router/lib/route.js:117:3)
+    at handle (<repo>/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (<repo>/node_modules/router/lib/layer.js:152:17)
+    at <repo>/node_modules/router/index.js:295:15
+    at param (<repo>/node_modules/router/index.js:600:14)
+
+ ❯ tests/acceptance/review-regressions.test.ts (12 tests | 12 failed) 191ms
+   ❯ R-1 (High) — FR-004 lockout cannot be bypassed by concurrent attempts (2)
+     × 10 simultaneous wrong-password attempts: at most 5 passwords are checked, the rest are refused 46ms
+     × a correct password hidden among a burst of guesses does not get through once 5 guesses have failed 25ms
+   ❯ R-2 / R-10 — FR-019, SC-006: erasure leaves no personal data in the database files (1)
+     × after erasure and shutdown, neither the email nor the display name is in the .db or -wal file 31ms
+   ❯ R-3 — FR-020: failed sign-in audit events contain no email-derived value (1)
+     × no SHA-256 of the attempted email appears in the audit log 18ms
+   ❯ R-4 — the example administrator password is never accepted (1)
+     × loadConfig rejects an empty ADMIN_PASSWORD and the old placeholder 1ms
+   ❯ R-5 — NFR-002: API responses are not cacheable (1)
+     × sign-in and data export carry Cache-Control: no-store 11ms
+   ❯ R-7 — FR-019: wrong passwords on account deletion count towards the lock (1)
+     × the 6th wrong password on /me/erase is refused with 429 21ms
+   ❯ R-8 — NFR-004: out-of-range dates are invalid input, never a 500 (1)
+     × years outside 2000–2099 give 400 10ms
+   ❯ R-9 — FR-021: the maintenance task also purges login failures and ended sessions (1)
+     × failures older than 24 h and sessions ended more than 24 h ago are deleted 11ms
+   ❯ R-11, R-12, U-3, U-4 — UI support (3)
+     × health reports the campus time zone (R-11) 5ms
+     × CSP restricts base URI and form targets (R-12) 7ms
+     × the page declares an icon that exists (U-3) and the deletion form names the account (U-4) 5ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-1 (High) — FR-004 lockout cannot be bypassed by concurrent attempts > 10 simultaneous wrong-password attempts: at most 5 passwords are checked, the rest are refused
+AssertionError: expected 10 to be less than or equal to 5
+ ❯ tests/acceptance/review-regressions.test.ts:30:21
+     28|     const checked = results.filter((r) => r.status === 401).length;
+     29|     const refused = results.filter((r) => r.status === 429).length;
+     30|     expect(checked).toBeLessThanOrEqual(5);
+       |                     ^
+     31|     expect(checked + refused).toBe(10);
+     32|     const after = await h.anon.post('/auth/login', { email: u.email, p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-1 (High) — FR-004 lockout cannot be bypassed by concurrent attempts > a correct password hidden among a burst of guesses does not get through once 5 guesses have failed
+AssertionError: expected 29 to be less than or equal to 5
+ ❯ tests/acceptance/review-regressions.test.ts:41:60
+     39|     const burst = Array.from({ length: 30 }, (_, i) => (i === 29 ? PAS…
+     40|     const results = await Promise.all(burst.map((password) => h!.anon.…
+     41|     expect(results.filter((r) => r.status === 401).length).toBeLessTha…
+       |                                                            ^
+     42|   });
+     43| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-2 / R-10 — FR-019, SC-006: erasure leaves no personal data in the database files > after erasure and shutdown, neither the email nor the display name is in the .db or -wal file
+AssertionError: <tmp> contains the email: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/acceptance/review-regressions.test.ts:61:98
+     59|       if (!existsSync(f)) continue;
+     60|       const bytes = readFileSync(f);
+     61|       expect(bytes.includes(Buffer.from('zelda.ondisk@uni.example')), …
+       |                                                                                                  ^
+     62|       expect(bytes.includes(Buffer.from('Zelda Ondiskname')), `${f} co…
+     63|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-3 — FR-020: failed sign-in audit events contain no email-derived value > no SHA-256 of the attempted email appears in the audit log
+AssertionError: expected '{"events":[{"id":5,"at":"2026-11-02T0…' not to contain '42e0ac77c86977155b1be967ec4c5d438f90e…'
+
+Expected: "42e0ac77c86977155b1be967ec4c5d438f90ee97604483457ff84761bb5cc1bd"
+Received: "{"events":[{"id":5,"at":"2026-11-02T06:00:00.000Z","actorUserId":null,"action":"auth.login.failed","targetType":null,"targetId":null,"details":{"emailHash":"9f9cb913db1d756d760ed403215552d0a2f8e7c9b019b82bcf06d0ca9a46f8bb"}},{"id":4,"at":"2026-11-02T06:00:00.000Z","actorUserId":null,"action":"auth.login.failed","targetType":"user","targetId":"b969f8a0-44fd-412b-b036-003da9e08588","details":{"emailHash":"42e0ac77c86977155b1be967ec4c5d438f90ee97604483457ff84761bb5cc1bd"}},{"id":3,"at":"2026-11-02T06:00:00.000Z","actorUserId":"b969f8a0-44fd-412b-b036-003da9e08588","action":"auth.login.succeeded","targetType":"user","targetId":"b969f8a0-44fd-412b-b036-003da9e08588","details":{}},{"id":2,"at":"2026-11-02T06:00:00.000Z","actorUserId":"b969f8a0-44fd-412b-b036-003da9e08588","action":"user.registered","targetType":"user","targetId":"b969f8a0-44fd-412b-b036-003da9e08588","details":{}},{"id":1,"at":"2026-11-02T06:00:00.000Z","actorUserId":"4846059d-a6c6-4d2d-ba2c-79d6bd8b005c","action":"auth.login.succeeded","targetType":"user","targetId":"4846059d-a6c6-4d2d-ba2c-79d6bd8b005c","details":{}}]}"
+
+ ❯ tests/acceptance/review-regressions.test.ts:75:30
+     73|     const audit = await h.admin.api.get('/admin/audit-events?limit=200…
+     74|     for (const email of [u.email, 'nobody@uni.example']) {
+     75|       expect(audit.text).not.toContain(createHash('sha256').update(ema…
+       |                              ^
+     76|     }
+     77|     const failed = audit.body.events.find((e: any) => e.action === 'au…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-4 — the example administrator password is never accepted > loadConfig rejects an empty ADMIN_PASSWORD and the old placeholder
+AssertionError: expected [Function] to throw an error
+ ❯ tests/acceptance/review-regressions.test.ts:86:89
+     84|     const base = { ADMIN_EMAIL: 'admin@uni.example' };
+     85|     expect(() => loadConfig({ ...base, ADMIN_PASSWORD: '' })).toThrow(…
+     86|     expect(() => loadConfig({ ...base, ADMIN_PASSWORD: 'replace-with-a…
+       |                                                                                         ^
+     87|     const example = readFileSync(new URL('../../.env.example', import.…
+     88|     const line = example.split('\n').find((l) => l.startsWith('ADMIN_P…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-5 — NFR-002: API responses are not cacheable > sign-in and data export carry Cache-Control: no-store
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ tests/acceptance/review-regressions.test.ts:98:44
+     96|     const u = await h.newUser();
+     97|     const login = await h.anon.post('/auth/login', { email: u.email, p…
+     98|     expect(login.headers['cache-control']).toContain('no-store');
+       |                                            ^
+     99|     expect((await u.api.get('/me/export')).headers['cache-control']).t…
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-7 — FR-019: wrong passwords on account deletion count towards the lock > the 6th wrong password on /me/erase is refused with 429
+AssertionError: expected [ 204, undefined ] to deeply equal [ 429, 'TOO_MANY_ATTEMPTS' ]
+
+- Expected
++ Received
+
+  [
+-   429,
+-   "TOO_MANY_ATTEMPTS",
++   204,
++   undefined,
+  ]
+
+ ❯ tests/acceptance/review-regressions.test.ts:111:44
+    109|     }
+    110|     const r = await u.api.post('/me/erase', { password: PASSWORD });
+    111|     expect([r.status, r.body.error?.code]).toEqual([429, 'TOO_MANY_ATT…
+       |                                            ^
+    112|     expect((await u.api.get('/me')).status).toBe(200);
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-8 — NFR-004: out-of-range dates are invalid input, never a 500 > years outside 2000–2099 give 400
+Error: Contract: status 500 is not documented for GET /rooms/{roomId}/availability; body={"error":{"code":"INTERNAL","message":"An unexpected error occurred."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ tests/acceptance/review-regressions.test.ts:121:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-9 — FR-021: the maintenance task also purges login failures and ended sessions > failures older than 24 h and sessions ended more than 24 h ago are deleted
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/acceptance/review-regressions.test.ts:137:37
+    135|     h.clock.advance(8 * HOUR + DAY + 1);
+    136|     h.container.maintenance.purge();
+    137|     expect(count('login_failures')).toBe(0);
+       |                                     ^
+    138|     expect(count('sessions')).toBe(0);
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-11, R-12, U-3, U-4 — UI support > health reports the campus time zone (R-11)
+Error: Contract: response body of GET /health (200) violates schema: data must have required property 'timeZone'; body={"status":"ok"}
+ ❯ checkContract tests/support/contract.ts:103:11
+    101|   if (v === null) return; // documented without a body (e.g. 204)
+    102|   if (!v(body)) {
+    103|     throw new Error(
+       |           ^
+    104|       `Contract: response body of ${op.method.toUpperCase()} ${op.temp…
+    105|         `${ajv.errorsText(v.errors)}; body=${JSON.stringify(body).slic…
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ tests/acceptance/review-regressions.test.ts:145:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-11, R-12, U-3, U-4 — UI support > CSP restricts base URI and form targets (R-12)
+AssertionError: expected 'default-src \'self\';script-src \'sel…' to match /base-uri '(none|self)'/
+
+- Expected:
+/base-uri '(none|self)'/
+
++ Received:
+"default-src 'self';script-src 'self';style-src 'self';object-src 'none';frame-ancestors 'none'"
+
+ ❯ tests/acceptance/review-regressions.test.ts:152:17
+    150|     h = await startHarness();
+    151|     const csp = (await request(h.app).get('/')).headers['content-secur…
+    152|     expect(csp).toMatch(/base-uri '(none|self)'/);
+       |                 ^
+    153|     expect(csp).toContain("form-action 'self'");
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/acceptance/review-regressions.test.ts > R-11, R-12, U-3, U-4 — UI support > the page declares an icon that exists (U-3) and the deletion form names the account (U-4)
+AssertionError: expected null not to be null
+ ❯ tests/acceptance/review-regressions.test.ts:160:22
+    158|     const page = await request(h.app).get('/');
+    159|     const icon = page.text.match(/<link[^>]+rel="icon"[^>]+href="([^"]…
+    160|     expect(icon).not.toBeNull();
+       |                      ^
+    161|     expect((await request(h.app).get(`/${icon![1].replace(/^\//, '')}`…
+    162|     const eraseForm = page.text.slice(page.text.indexOf('id="erase-for…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  19:35:20
+   Duration  479ms (tests 47%, import 43%, transform 10%)
+
