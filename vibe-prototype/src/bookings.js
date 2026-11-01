@@ -1,4 +1,5 @@
 import { transaction } from './db.js';
+import { closureOn, closuresOn } from './rooms.js';
 import { addDays, formatDuration, formatTime, isValidDate, minutesOfDay, parseTime, toDateStr } from './time.js';
 
 export class BookingError extends Error {
@@ -49,8 +50,16 @@ export function dayGrid(db, config, date, userId, now) {
     .all(date);
   const { today } = bookingWindow(config, now);
   const nowMin = minutesOfDay(now);
+  const closed = closuresOn(db, date);
 
   const columns = rooms.map((room) => {
+    const closure = closed.get(room.id);
+    if (closure) {
+      // One tall cell covering the whole day.
+      return starts.map((_, i) =>
+        i === 0 ? { state: 'closed', label: closure.reason, span: starts.length } : { state: 'closed', hidden: true }
+      );
+    }
     const roomBookings = bookings.filter((b) => b.room_id === room.id);
     const cells = starts.map((start) => {
       const end = start + config.slotMinutes;
@@ -139,6 +148,11 @@ export function createBooking(db, config, input, now) {
   }
 
   return transaction(db, () => {
+    const closure = closureOn(db, room.id, date);
+    if (closure) {
+      throw new BookingError(`${room.name} is closed on that day (${closure.reason}). Please pick another room.`, 409);
+    }
+
     const roomClash = db
       .prepare('SELECT 1 FROM bookings WHERE room_id = ? AND date = ? AND start_min < ? AND end_min > ?')
       .get(room.id, date, end, start);

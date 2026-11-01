@@ -37,7 +37,26 @@ function alert(flash) {
   return html`<div class="alert ${flash.type}" role="${flash.type === 'error' ? 'alert' : 'status'}">${flash.text}</div>`;
 }
 
-function layout({ title, user, csrf, active, flash, body }) {
+// Where "Dismiss" on a notice returns to; the server only accepts these paths.
+export const PAGE_PATHS = { rooms: '/', my: '/my', admin: '/admin', account: '/account' };
+
+function noticeList(notices, csrf, active) {
+  if (!notices?.length) return '';
+  return html`<div class="notices">
+    ${notices.map(
+      (n) => html`<div class="alert notice" role="status">
+      <span>${n.message}</span>
+      <form method="post" action="/notices/${n.id}/dismiss">
+        ${csrfField(csrf)}
+        <input type="hidden" name="back" value="${PAGE_PATHS[active] ?? '/'}">
+        <button type="submit" class="link-button">Dismiss</button>
+      </form>
+    </div>`
+    )}
+  </div>`;
+}
+
+function layout({ title, user, csrf, notices, active, flash, body }) {
   const navLink = (href, label, key) =>
     html`<a href="${href}"${active === key ? html` aria-current="page"` : ''}>${label}</a>`;
 
@@ -56,10 +75,13 @@ function layout({ title, user, csrf, active, flash, body }) {
       <a class="brand" href="/">RoomBook</a>
       ${
         user
-          ? html`<nav class="nav">${navLink('/', 'Book a room', 'rooms')}${navLink('/my', 'My bookings', 'my')}</nav>
+          ? html`<nav class="nav">
+        ${navLink('/', 'Book a room', 'rooms')}${navLink('/my', 'My bookings', 'my')}
+        ${user.isAdmin ? navLink('/admin', 'Admin', 'admin') : ''}
+      </nav>
       <form class="logout" method="post" action="/logout">
         ${csrfField(csrf)}
-        <span class="who">${user.name}</span>
+        <a class="who" href="/account"${active === 'account' ? html` aria-current="page"` : ''}>${user.name}</a>
         <button type="submit" class="link-button">Log out</button>
       </form>`
           : ''
@@ -67,6 +89,7 @@ function layout({ title, user, csrf, active, flash, body }) {
     </div>
   </header>
   <main class="wrap">
+    ${noticeList(notices, csrf, active)}
     ${alert(flash)}
     ${body}
   </main>
@@ -76,9 +99,10 @@ function layout({ title, user, csrf, active, flash, body }) {
 
 // --- Auth pages ---
 
-export function loginPage({ error, email }) {
+export function loginPage({ error, email, flash }) {
   return layout({
     title: 'Log in',
+    flash,
     body: html`<section class="card narrow">
       <h1>Log in</h1>
       <p class="muted">Book quiet rooms and group spaces around campus.</p>
@@ -103,13 +127,16 @@ export function signupPage({ error, values = {}, emailDomain }) {
         <label>Full name <input type="text" name="name" value="${values.name}" maxlength="80" autocomplete="name" required autofocus></label>
         <label>University email
           <input type="email" name="email" value="${values.email}" autocomplete="email" required
-            placeholder="${emailDomain ? `you@${emailDomain}` : 'you@university.edu'}">
+            placeholder="you@${emailDomain}">
+          <small class="muted">Only @${emailDomain} addresses can sign up.</small>
         </label>
         <label>Password <input type="password" name="password" minlength="8" autocomplete="new-password" required>
-          <small class="muted">At least 8 characters.</small>
+          <small class="muted">At least 8 characters. Avoid common passwords.</small>
         </label>
         <button type="submit" class="btn primary">Create account</button>
       </form>
+      <p class="muted small">We store your name, email and bookings. You can download or delete them at any time
+        from your account page.</p>
       <p class="muted">Already have an account? <a href="/login">Log in</a></p>
     </section>`,
   });
@@ -130,17 +157,20 @@ function gridCell(cell, room, date) {
       return html`<td class="cell mine"${span}><strong>Your booking</strong><small>${cell.label}</small></td>`;
     case 'booked':
       return html`<td class="cell booked"${span}><span>Booked</span><small>${cell.label}</small></td>`;
+    case 'closed':
+      return html`<td class="cell closed"${span}><strong>Closed</strong><small>${cell.label}</small></td>`;
     default:
       return html`<td class="cell past" aria-label="Unavailable"></td>`;
   }
 }
 
-export function roomsPage({ user, csrf, flash, grid, date, today, lastDay, prevDate, nextDate, config }) {
+export function roomsPage({ user, csrf, notices, flash, grid, date, today, lastDay, prevDate, nextDate, config }) {
   const { rooms, rows } = grid;
   return layout({
     title: 'Book a room',
     user,
     csrf,
+    notices,
     active: 'rooms',
     flash,
     body: html`<div class="page-head">
@@ -166,7 +196,9 @@ export function roomsPage({ user, csrf, flash, grid, date, today, lastDay, prevD
 
     ${
       rooms.length === 0
-        ? html`<div class="card empty">No rooms have been set up yet. Add them to <code>rooms.json</code> and restart.</div>`
+        ? html`<div class="card empty">No rooms have been set up yet.${
+            user.isAdmin ? html` <a href="/admin">Add one on the admin page.</a>` : ''
+          }</div>`
         : html`<div class="grid-wrap">
       <table class="grid">
         <thead>
@@ -202,12 +234,13 @@ export function roomsPage({ user, csrf, flash, grid, date, today, lastDay, prevD
 
 // --- Booking form ---
 
-export function bookPage({ user, csrf, error, rooms, values, slots, durations, today, lastDay }) {
+export function bookPage({ user, csrf, notices, error, rooms, values, slots, durations, today, lastDay }) {
   const selected = (a, b) => (String(a) === String(b) ? html` selected` : '');
   return layout({
     title: 'Book a room',
     user,
     csrf,
+    notices,
     active: 'rooms',
     body: html`<section class="card narrow">
       <h1>Book a room</h1>
@@ -268,11 +301,12 @@ function bookingItem(b, csrf, canCancel) {
   </li>`;
 }
 
-export function myBookingsPage({ user, csrf, flash, upcoming, past, config }) {
+export function myBookingsPage({ user, csrf, notices, flash, upcoming, past, config }) {
   return layout({
     title: 'My bookings',
     user,
     csrf,
+    notices,
     active: 'my',
     flash,
     body: html`<h1>My bookings</h1>
@@ -297,15 +331,146 @@ export function myBookingsPage({ user, csrf, flash, upcoming, past, config }) {
 
 // --- Errors ---
 
-export function errorPage({ user, csrf, title, message }) {
+export function errorPage({ user, csrf, notices, title, message }) {
   return layout({
     title,
     user,
     csrf,
+    notices,
     body: html`<section class="card narrow">
       <h1>${title}</h1>
       <p>${message}</p>
       <p><a href="/">Back to rooms</a></p>
     </section>`,
+  });
+}
+
+// --- Admin ---
+
+function closureRange(c) {
+  if (!c.end_date) return `From ${formatDate(c.start_date)}, until further notice`;
+  if (c.end_date === c.start_date) return formatDate(c.start_date);
+  return `${formatDate(c.start_date)} – ${formatDate(c.end_date)}`;
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function adminRoom(r, csrf, today) {
+  return html`<li class="card admin-room">
+    <div class="admin-room-head">
+      <div>
+        <span class="room-name">${r.name}</span>
+        <span class="room-meta">${r.location}${r.location ? ' · ' : ''}Seats ${r.capacity}${r.features ? ` · ${r.features}` : ''}</span>
+      </div>
+      <span class="badge ${r.closedToday ? 'closed' : 'open'}">${r.closedToday ? 'Closed today' : 'Open'}</span>
+    </div>
+    <p class="muted small">${plural(r.upcomingBookings, 'upcoming booking')}</p>
+    ${
+      r.closures.length
+        ? html`<ul class="closures">
+      ${r.closures.map(
+        (c) => html`<li>
+        <span><strong>Closed:</strong> ${closureRange(c)} · ${c.reason}</span>
+        <form method="post" action="/admin/closures/${c.id}/delete">
+          ${csrfField(csrf)}
+          <button type="submit" class="link-button">Reopen</button>
+        </form>
+      </li>`
+      )}
+    </ul>`
+        : ''
+    }
+    <details>
+      <summary>Close for maintenance</summary>
+      <form method="post" action="/admin/rooms/${r.id}/close" class="stack">
+        ${csrfField(csrf)}
+        <div class="row">
+          <label>First day <input type="date" name="from" value="${today}" min="${today}" required></label>
+          <label>Last day <input type="date" name="until" min="${today}">
+            <small class="muted">Leave empty to close until further notice.</small>
+          </label>
+        </div>
+        <label>Reason <input type="text" name="reason" value="Maintenance" maxlength="200"></label>
+        <p class="muted small">Bookings in this period will be cancelled and the students will see a notice.</p>
+        <div><button type="submit" class="btn danger">Close room</button></div>
+      </form>
+    </details>
+  </li>`;
+}
+
+export function adminPage({ user, csrf, notices, flash, rooms, today, values = {} }) {
+  return layout({
+    title: 'Admin',
+    user,
+    csrf,
+    notices,
+    active: 'admin',
+    flash,
+    body: html`<h1>Admin</h1>
+    <p class="muted">Add study rooms and close them for maintenance. Closed rooms cannot be booked.</p>
+    <section>
+      <h2>Rooms</h2>
+      ${
+        rooms.length
+          ? html`<ul class="admin-rooms">${rooms.map((r) => adminRoom(r, csrf, today))}</ul>`
+          : html`<div class="card empty">No rooms yet. Add the first one below.</div>`
+      }
+    </section>
+    <section>
+      <h2>Add a room</h2>
+      <form method="post" action="/admin/rooms" class="card stack add-room">
+        ${csrfField(csrf)}
+        <div class="row">
+          <label class="grow">Name <input type="text" name="name" value="${values.name}" maxlength="80" required></label>
+          <label>Seats <input type="number" name="capacity" value="${values.capacity ?? 4}" min="1" max="500" required></label>
+        </div>
+        <label>Location <input type="text" name="location" value="${values.location}" maxlength="120"
+          placeholder="e.g. Main Library, Floor 3"></label>
+        <label>Features <input type="text" name="features" value="${values.features}" maxlength="200"
+          placeholder="e.g. Whiteboard, TV screen"></label>
+        <div><button type="submit" class="btn primary">Add room</button></div>
+      </form>
+    </section>`,
+  });
+}
+
+// --- Account (data export and deletion) ---
+
+export function accountPage({ user, csrf, notices, error, account }) {
+  return layout({
+    title: 'Your account',
+    user,
+    csrf,
+    notices,
+    active: 'account',
+    body: html`<h1>Your account</h1>
+    <div class="cards">
+      <section class="card">
+        <dl class="facts">
+          <dt>Name</dt><dd>${account.name}</dd>
+          <dt>Email</dt><dd>${account.email}</dd>
+          <dt>Member since</dt><dd>${formatDate(account.created_at.slice(0, 10))}</dd>
+          <dt>Role</dt><dd>${account.is_admin ? 'Admin' : 'Student'}</dd>
+        </dl>
+      </section>
+      <section class="card">
+        <h2>Download your data</h2>
+        <p>Get a copy of everything RoomBook stores about you as a JSON file. That covers your profile, bookings and
+          notices, plus any recent failed logins to your account.</p>
+        <a class="btn" href="/account/export">Download my data</a>
+      </section>
+      <section class="card danger-zone" id="delete">
+        <h2>Delete your account</h2>
+        <p>This permanently deletes your account, all of your bookings and your notices. It cannot be undone.</p>
+        ${alert(error && { type: 'error', text: error })}
+        <form method="post" action="/account/delete" class="stack">
+          ${csrfField(csrf)}
+          <label>Enter your password to confirm
+            <input type="password" name="password" autocomplete="current-password" required>
+          </label>
+          <div><button type="submit" class="btn danger">Delete my account</button></div>
+        </form>
+      </section>
+    </div>`,
   });
 }

@@ -16,6 +16,9 @@
   --danger: #b42318;
   --success-bg: #e9f6ee;
   --error-bg: #fdecea;
+  --notice-bg: #fff6e0;
+  --closed: #fbeee0;
+  --closed-text: #8a4b0f;
   --radius: 8px;
   color-scheme: light;
 }
@@ -39,6 +42,9 @@
     --danger: #ff8a7f;
     --success-bg: #16301f;
     --error-bg: #3a1c1a;
+    --notice-bg: #3a2f14;
+    --closed: #33261a;
+    --closed-text: #f0b878;
     color-scheme: dark;
   }
 }
@@ -70,7 +76,8 @@ main.wrap { padding-top: 24px; padding-bottom: 48px; }
 .nav a { text-decoration: none; color: var(--muted); padding: 4px 0; border-bottom: 2px solid transparent; }
 .nav a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
 .logout { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.who { color: var(--muted); }
+.who { color: var(--muted); text-decoration: none; }
+.who:hover, .who[aria-current="page"] { color: var(--text); text-decoration: underline; }
 .link-button { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; }
 
 /* Cards, forms, buttons */
@@ -145,6 +152,7 @@ main > .alert:first-child { margin-top: 0; }
 .cell.free a:hover { background: var(--free-hover); }
 .cell.booked { background: var(--booked); color: var(--booked-text); }
 .cell.mine { background: var(--mine); color: var(--mine-text); }
+.cell.closed { background: var(--closed); color: var(--closed-text); vertical-align: top; padding-top: 16px; }
 .cell.past {
   background: repeating-linear-gradient(45deg, transparent 0 6px, var(--booked) 6px 8px);
 }
@@ -165,4 +173,36 @@ main > .alert:first-child { margin-top: 0; }
   .day-picker { width: 100%; }
   .day-picker input { flex: 1; min-width: 0; }
   .booking { flex-direction: column; align-items: flex-start; }
+}
+
+/* Notices (e.g. a booking cancelled because a room closed) */
+.notices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.alert.notice { background: var(--notice-bg); margin: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+
+/* Admin */
+.admin-rooms { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.admin-room { padding: 16px; }
+.admin-room p { margin: 8px 0; }
+.admin-room-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.badge { font-size: 0.8rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.badge.open { background: var(--free); color: var(--free-text); }
+.badge.closed { background: var(--closed); color: var(--closed-text); }
+.closures { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.closures li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 6px; background: var(--closed); color: var(--closed-text); }
+details summary { cursor: pointer; color: var(--accent); font-weight: 600; margin-top: 4px; }
+details .stack { margin-bottom: 0; }
+.add-room { max-width: 640px; }
+.row > label.grow { flex: 3; }
+
+/* Account */
+.cards { display: flex; flex-direction: column; gap: 16px; max-width: 640px; }
+.cards h2 { margin-top: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 24px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.danger-zone { border-color: var(--danger); }
+
+@media (max-width: 600px) {
+  .admin-rooms { grid-template-columns: 1fr; }
+  .alert.notice { flex-direction: column; gap: 4px; }
 }
