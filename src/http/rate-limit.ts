@@ -8,11 +8,15 @@ import { DomainError } from '../domain/errors.ts';
 
 export type RateLimitDecision = { allowed: true } | { allowed: false; retryAfterSeconds: number };
 
+/**
+ * Windows are kept in a Map in the order they started (insertion order). Before every hit the
+ * expired ones are removed from the front, so the map only ever holds clients seen within the
+ * last window (R-6); the work is amortised O(1) per request.
+ */
 export class FixedWindowRateLimiter {
   private readonly limit: number;
   private readonly windowMs: number;
   private readonly windows = new Map<string, { start: number; count: number }>();
-  private lastSweep = Number.NEGATIVE_INFINITY;
 
   constructor(opts: { limit: number; windowMs?: number }) {
     this.limit = opts.limit;
@@ -25,9 +29,9 @@ export class FixedWindowRateLimiter {
   }
 
   hit(key: string, now: number): RateLimitDecision {
-    this.sweep(now);
+    this.evictExpired(now);
     let w = this.windows.get(key);
-    if (!w || now >= w.start + this.windowMs) {
+    if (!w) {
       w = { start: now, count: 0 };
       this.windows.set(key, w);
     }
@@ -38,12 +42,10 @@ export class FixedWindowRateLimiter {
     return { allowed: true };
   }
 
-  /** Drops expired windows at most once per window length. */
-  private sweep(now: number): void {
-    if (now - this.lastSweep < this.windowMs) return;
-    this.lastSweep = now;
+  private evictExpired(now: number): void {
     for (const [key, w] of this.windows) {
-      if (now >= w.start + this.windowMs) this.windows.delete(key);
+      if (now < w.start + this.windowMs) break;
+      this.windows.delete(key);
     }
   }
 }

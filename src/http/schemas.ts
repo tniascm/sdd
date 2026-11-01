@@ -50,7 +50,10 @@ const EQUIPMENT_VALUES = ['whiteboard', 'projector', 'display-screen', 'video-co
 const uuid = (label: string) => z.uuid(`${label} must be a valid id.`);
 /** Contract `Timestamp`: ISO 8601 date-time in UTC (`…Z`). */
 const timestamp = (label: string) => z.iso.datetime(`${label} must be an ISO 8601 UTC time such as 2026-11-03T08:00:00Z.`);
-const isoDate = z.iso.date('date must be a calendar date in the form YYYY-MM-DD.');
+/** NFR-004 (R-8): a real calendar date between 2000-01-01 and 2099-12-31 (contract pattern `^20\d{2}-`). */
+const isoDate = z.iso
+  .date('date must be a calendar date in the form YYYY-MM-DD.')
+  .regex(/^20\d{2}-\d{2}-\d{2}$/, 'date must be between 2000-01-01 and 2099-12-31.');
 
 const roomName = z.string().trim().min(1, 'Name is required.').max(60, 'Name must be at most 60 characters.');
 const building = z.string().trim().min(1, 'Building is required.').max(60, 'Building must be at most 60 characters.');

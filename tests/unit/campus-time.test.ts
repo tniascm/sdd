@@ -117,3 +117,11 @@ describe('nextLocalDate', () => {
     expect(() => nextLocalDate('2026-02-29')).toThrow(RangeError);
   });
 });
+
+describe('years before 100 (review R-8)', () => {
+  it('are parsed as written, not shifted to the 1900s', () => {
+    expect(nextLocalDate('0050-12-31')).toBe('0051-01-01');
+    expect(localToUtc('0050-01-01', '12:00', 'UTC')).toBe(Date.parse('0050-01-01T12:00:00.000Z'));
+    expect(() => localToUtc('0050-02-29', '12:00', 'UTC')).toThrow(RangeError);
+  });
+});

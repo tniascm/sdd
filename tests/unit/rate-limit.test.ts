@@ -43,6 +43,26 @@ describe('FixedWindowRateLimiter', () => {
   });
 });
 
+describe('FixedWindowRateLimiter memory (R-6)', () => {
+  it('evicts every window as soon as it has expired, not only once per minute', () => {
+    const limiter = new FixedWindowRateLimiter({ limit: 5 });
+    limiter.hit('early', T0);
+    for (let i = 0; i < 1000; i++) limiter.hit(`client-${i}`, T0 + 30 * S);
+    limiter.hit('probe', T0 + 60 * S); // 'early' expired
+    expect(limiter.size).toBe(1001);
+    limiter.hit('late', T0 + 90 * S); // the 1000 clients expired; 'probe' (T0+60 s) has not
+    expect(limiter.size).toBe(2);
+  });
+
+  it('a client whose window expired starts a fresh one', () => {
+    const limiter = new FixedWindowRateLimiter({ limit: 1 });
+    expect(limiter.hit('a', T0).allowed).toBe(true);
+    limiter.hit('b', T0 + 30 * S);
+    expect(limiter.hit('a', T0 + 60 * S).allowed).toBe(true);
+    expect(limiter.hit('a', T0 + 61 * S)).toEqual({ allowed: false, retryAfterSeconds: 59 });
+  });
+});
+
 describe('createRateLimit middleware', () => {
   function app(clock: Clock, limit: number) {
     const a = express();

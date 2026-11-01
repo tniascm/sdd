@@ -30,16 +30,25 @@ afterEach(() => {
 });
 
 describe('createApp', () => {
-  it('GET /api/v1/health → 200 { status: "ok" }', async () => {
+  it('GET /api/v1/health → 200 { status: "ok", timeZone } (R-11)', async () => {
     const r = await request(createApp(container())).get('/api/v1/health');
     expect(r.status).toBe(200);
-    expect(r.body).toEqual({ status: 'ok' });
+    expect(r.body).toEqual({ status: 'ok', timeZone: 'Europe/Helsinki' });
   });
 
-  it('sends the research R9 CSP and anti-sniffing / anti-framing headers (NFR-005)', async () => {
+  it('API responses, including errors and 429s, are not cacheable (NFR-002, R-5)', async () => {
+    const app = createApp(container({ rateLimitPerMinute: 2 }));
+    for (const path of ['/api/v1/health', '/api/v1/nope', '/api/v1/health']) {
+      expect((await request(app).get(path)).headers['cache-control']).toBe('no-store');
+    }
+    expect((await request(app).get('/api/v1/health')).status).toBe(429);
+  });
+
+  it('sends the research R9 CSP (+ base-uri, form-action — R-12) and anti-sniffing / anti-framing headers (NFR-005)', async () => {
     const r = await request(createApp(container())).get('/api/v1/health');
     expect(r.headers['content-security-policy']).toBe(
-      "default-src 'self';script-src 'self';style-src 'self';object-src 'none';frame-ancestors 'none'",
+      "default-src 'self';script-src 'self';style-src 'self';object-src 'none';frame-ancestors 'none';" +
+        "base-uri 'none';form-action 'self'",
     );
     expect(r.headers['x-content-type-options']).toBe('nosniff');
     expect(r.headers['x-frame-options']).toBe('DENY');

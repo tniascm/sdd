@@ -1,5 +1,6 @@
 /**
- * The Express application: security headers (NFR-005, research R9), per-client rate limit
+ * The Express application: security headers (NFR-005, research R9; base-uri and form-action
+ * restricted after review R-12), no-store caching for the API (R-5), per-client rate limit
  * (NFR-010), 10 kB JSON bodies (NFR-004), the `/api/v1` API, the static UI and error mapping.
  */
 import { fileURLToPath } from 'node:url';
@@ -30,11 +31,18 @@ export function createApp(container: Container): express.Express {
           styleSrc: ["'self'"],
           objectSrc: ["'none'"],
           frameAncestors: ["'none'"],
+          baseUri: ["'none'"],
+          formAction: ["'self'"],
         },
       },
       frameguard: { action: 'deny' },
     }),
   );
+  // NFR-002 (R-5): API responses (session tokens, personal data) must not be cached.
+  app.use('/api', (_req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
   app.use(createRateLimit({ clock: container.clock, limitPerMinute: container.config.rateLimitPerMinute }));
   app.use(express.json({ limit: '10kb' }));
 
@@ -48,8 +56,9 @@ export function createApp(container: Container): express.Express {
 
 function apiRouter(c: Container): express.Router {
   const api = express.Router();
+  // The UI reads the campus time zone from here before showing any time (R-11).
   api.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', timeZone: c.config.timeZone });
   });
   api.use(authRoutes(c));
   api.use(meRoutes(c));

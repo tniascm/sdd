@@ -53,6 +53,17 @@ export function wallClock(instant: number, timeZone: string): WallClock {
 
 const pad = (n: number, width = 2) => String(n).padStart(width, '0');
 
+/**
+ * UTC epoch ms of a calendar date and time. Unlike `Date.UTC`, years 0–99 are not shifted to
+ * 1900–1999 (review R-8); out-of-range day/month values roll over like `Date.UTC`.
+ */
+function utcMs(year: number, month: number, day: number, hour = 0, minute = 0, second = 0, ms = 0): number {
+  const d = new Date(0);
+  d.setUTCFullYear(year, month - 1, day);
+  d.setUTCHours(hour, minute, second, ms);
+  return d.getTime();
+}
+
 /** Campus-local calendar date (`YYYY-MM-DD`) of an instant. */
 export function localDate(instant: number, timeZone: string): string {
   const wc = wallClock(instant, timeZone);
@@ -62,7 +73,7 @@ export function localDate(instant: number, timeZone: string): string {
 /** Offset of `timeZone` from UTC at `instant`, in ms (e.g. +3 h for Helsinki in summer). */
 function offsetAt(instant: number, timeZone: string): number {
   const wc = wallClock(instant, timeZone);
-  const asUtc = Date.UTC(wc.year, wc.month - 1, wc.day, wc.hour, wc.minute, wc.second, wc.millisecond);
+  const asUtc = utcMs(wc.year, wc.month, wc.day, wc.hour, wc.minute, wc.second, wc.millisecond);
   return asUtc - instant;
 }
 
@@ -74,7 +85,7 @@ export function parseLocalDate(date: string): { year: number; month: number; day
   const m = DATE_RE.exec(date);
   if (!m) throw new RangeError(`invalid date: ${date}`);
   const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
-  const check = new Date(Date.UTC(year, month - 1, day));
+  const check = new Date(utcMs(year, month, day));
   if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
     throw new RangeError(`invalid date: ${date}`);
   }
@@ -84,7 +95,7 @@ export function parseLocalDate(date: string): { year: number; month: number; day
 /** The calendar date after `date` (`YYYY-MM-DD`). */
 export function nextLocalDate(date: string): string {
   const { year, month, day } = parseLocalDate(date);
-  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  const next = new Date(utcMs(year, month, day + 1));
   return `${pad(next.getUTCFullYear(), 4)}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
 }
 
@@ -103,7 +114,7 @@ export function parseLocalTime(time: string): number {
 export function localToUtc(date: string, time: string, timeZone: string): number {
   const { year, month, day } = parseLocalDate(date);
   const minutes = parseLocalTime(time);
-  const naive = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60);
+  const naive = utcMs(year, month, day, Math.floor(minutes / 60), minutes % 60);
   const firstOffset = offsetAt(naive, timeZone);
   let instant = naive - firstOffset;
   const secondOffset = offsetAt(instant, timeZone);
