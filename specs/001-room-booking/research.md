@@ -121,3 +121,16 @@ taken from memory: package versions with `npm view`, runtime features with small
   account is never modified. Its display name comes from `ADMIN_DISPLAY_NAME` (default
   `Administrator`). Creation is not audit-logged — FR-020 lists self-registration, and this is an
   installation step.
+
+## R13. Interpretations made during implementation (reported by the Implementer, accepted by the Verifier)
+
+| Topic | Interpretation | Basis |
+|---|---|---|
+| Admin cancelling **own** booking | allowed until it ends, no reason needed; `cancelledBy: owner`; audited as `booking.cancelled_by_admin` with `own: true` | Clarification Q3 requires a reason only for *someone else's* booking |
+| Admin day view | whole campus day [00:00, next 00:00), all statuses, ordered by start then room name | FR-015 silent on order/status |
+| Availability | one booked interval per booking (back-to-back not merged) | FR-006 silent |
+| Unknown query parameters | rejected with 400 | NFR-004 "every request body and parameter" |
+| Equipment filter with unknown value | empty list (value matches contract pattern) | FR-005 |
+| Several rule violations at once | first failing rule reported, in order: slot boundary → too short → in past → opening hours → too long → too far ahead → party size → quota | FR-010 says "naming the violated rule" |
+| `auth.locked` | logged on every refused attempt (not when the lock begins) | data-model amendment VF-2 |
+| Lockout rule | pure domain function `src/domain/lockout.ts` | Principle III |

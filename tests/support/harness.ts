@@ -81,6 +81,8 @@ export interface Harness {
   as(token: string): Client;
   newUser(opts?: { role?: 'student' | 'staff' | 'admin'; email?: string; displayName?: string }): Promise<TestUser>;
   login(email: string, password?: string): Promise<string>;
+  /** Sign in again (sessions expire 8 h after sign-in — FR-002) and return the user with a fresh client. */
+  relogin(user: TestUser): Promise<TestUser>;
   createRoom(input?: Partial<{ name: string; building: string; capacity: number; equipment: string[] }>): Promise<any>;
   book(user: TestUser, input: { roomId: string; start: string; end: string; partySize?: number; purpose?: string }): Promise<Res>;
   close(): void;
@@ -135,6 +137,10 @@ export async function startHarness(opts: { now?: string; config?: Partial<Config
     admin,
     as: (token) => new Client(app, token),
     login,
+    async relogin(user) {
+      const token = await login(user.email, user.password);
+      return { ...user, token, api: new Client(app, token) };
+    },
     async newUser(o = {}) {
       userCounter += 1;
       const email = o.email ?? `user${userCounter}@uni.example`;

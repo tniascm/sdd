@@ -42,6 +42,7 @@ describe('US3 — Manage my bookings', () => {
   it('US3-2 (FR-014): a booking that has already started cannot be cancelled by its owner', async () => {
     const b = (await h.book(alice, tomorrow('10:00', '11:00'))).body;
     h.clock.set(at(TOMORROW, '10:00'));
+    alice = await h.relogin(alice); // the original session expired after 8 h (FR-002) — VF-5
     const r = await alice.api.post(`/bookings/${b.id}/cancel`);
     expect([r.status, r.body.error?.code]).toEqual([422, 'ALREADY_STARTED']);
   });
@@ -63,6 +64,7 @@ describe('US3 — listing and edge cases (FR-013)', () => {
     const second = (await h.book(alice, tomorrow('12:00', '13:00'))).body;
     await alice.api.post(`/bookings/${second.id}/cancel`);
     h.clock.set(at(TOMORROW, '09:30')); // the first booking has ended
+    alice = await h.relogin(alice); // the original session expired after 8 h (FR-002) — VF-5
 
     expect((await alice.api.get('/bookings/mine')).body.bookings).toEqual([]);
     const all = await alice.api.get('/bookings/mine?include=all');
@@ -89,6 +91,7 @@ describe('US3 — listing and edge cases (FR-013)', () => {
     }
     h.clock.set(at(TOMORROW, '09:00'));
     h.clock.advance(1 * HOUR); // 10:00 — first booking ended, second just started
+    alice = await h.relogin(alice); // the original session expired after 8 h (FR-002) — VF-5
     expect((await h.book(alice, tomorrow('15:00', '16:00'))).status).toBe(201);
   });
 });

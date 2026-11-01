@@ -38,8 +38,10 @@ Valid ⇔ `revokedAt IS NULL AND now < expiresAt AND user exists`.
 | emailHash | text | SHA-256 hex of the normalised (trimmed, lower-cased) email — also for unknown emails |
 | at | ms | time of the failed attempt |
 
-Locked ⇔ ≥ 5 failures with `at > now − 15 min`; the lock lasts until 15 min after the most recent
-failure. A successful sign-in deletes the account's failures. Attempts refused *because of* the
+Locked ⇔ there are ≥ 5 failures within the 15 minutes ending at the most recent failure, **and**
+`now < mostRecentFailure + 15 min` (i.e. the lock lasts until 15 min after the most recent failure).
+*(Wording corrected after implementation: the earlier text "≥ 5 failures with `at > now − 15 min`"
+contradicted "lasts until 15 min after the most recent failure" — reported by the Implementer.)* A successful sign-in deletes the account's failures. Attempts refused *because of* the
 lock are not checked and not recorded as failures (otherwise a retrying user would stay locked
 forever); each refusal is audit-logged as `auth.locked`. *(Amended 2026-11-01 by the Verifier
 while writing US2-4 — the original text did not say whether refused attempts count.)*
