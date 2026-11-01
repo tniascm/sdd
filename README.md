@@ -27,7 +27,7 @@ there is no build step.
 
 ```bash
 npm ci
-cp .env.example .env     # then set ADMIN_EMAIL / ADMIN_PASSWORD
+cp .env.example .env     # REQUIRED: set ADMIN_PASSWORD (start-up refuses an empty or example value)
 npm run seed             # first administrator + 6 demo rooms (safe to run again)
 npm start                # UI on http://localhost:3000, API under /api/v1
 ```
@@ -47,7 +47,7 @@ Environment variables (read from `.env` when present):
 | `OPENING_HOURS` | `08:00-22:00` | campus-local opening hours, full or half hours |
 | `ALLOWED_EMAIL_DOMAINS` | `uni.example` | comma-separated domains allowed to register |
 | `RATE_LIMIT_PER_MINUTE` | `300` | requests per minute per client address |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | — | first administrator, created if no account with that email exists |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | — | first administrator, created if no account with that email exists; both or neither, and the password must not be empty or the old example value |
 | `ADMIN_DISPLAY_NAME` | `Administrator` | display name of that administrator |
 
 Invalid values stop the server at start-up with a message naming the variable. Sessions last

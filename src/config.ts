@@ -109,12 +109,18 @@ function openingHours(raw: string): { opensAt: string; closesAt: string } {
   return { opensAt: m[1], closesAt: m[2] };
 }
 
+/** Passwords published in earlier example files; never accepted (R-4). */
+const KNOWN_EXAMPLE_PASSWORDS = new Set(['replace-with-a-long-secret']);
+
 function admin(env: NodeJS.ProcessEnv): Config['admin'] {
   const email = value(env, 'ADMIN_EMAIL')?.toLowerCase();
   const password = env.ADMIN_PASSWORD ?? '';
   if (email === undefined && password === '') return null;
   if (email === undefined || password === '') {
-    throw new ConfigError('ADMIN_EMAIL and ADMIN_PASSWORD must be set together');
+    throw new ConfigError('ADMIN_EMAIL and ADMIN_PASSWORD must be set together (set ADMIN_PASSWORD in .env)');
+  }
+  if (KNOWN_EXAMPLE_PASSWORDS.has(password)) {
+    throw new ConfigError('ADMIN_PASSWORD is the example value from .env.example; choose your own password');
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     throw new ConfigError('ADMIN_EMAIL must be an email address');

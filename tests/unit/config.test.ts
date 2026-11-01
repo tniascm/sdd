@@ -59,6 +59,8 @@ describe('loadConfig', () => {
     [{ ADMIN_PASSWORD: 'a very long secret' }, /together/],
     [{ ADMIN_EMAIL: 'not-an-email', ADMIN_PASSWORD: 'a very long secret' }, /ADMIN_EMAIL/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'short' }, /ADMIN_PASSWORD/],
+    [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: '' }, /ADMIN_PASSWORD/],
+    [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'replace-with-a-long-secret' }, /example value/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'ADMIN@uni.example' }, /ADMIN_PASSWORD/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'a very long secret', ADMIN_DISPLAY_NAME: 'x'.repeat(61) }, /ADMIN_DISPLAY_NAME/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'a very long secret', ADMIN_DISPLAY_NAME: 'Bad\u0007Name' }, /ADMIN_DISPLAY_NAME/],
