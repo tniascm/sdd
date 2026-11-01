@@ -35,6 +35,7 @@ paths:
                 required: [status]
                 properties:
                   status: { const: ok }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /auth/register:
     post:
@@ -84,6 +85,7 @@ paths:
       responses:
         '204': { description: Signed out }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /me:
     get:
@@ -96,6 +98,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /me/export:
     get:
@@ -108,6 +111,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/DataExport' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /me/erase:
     post:
@@ -124,6 +128,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /rooms:
     get:
@@ -148,6 +153,7 @@ paths:
               schema: { $ref: '#/components/schemas/RoomList' }
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     post:
       tags: [rooms, admin]
       summary: Create a room (FR-007, admin)
@@ -166,6 +172,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /rooms/{roomId}:
     parameters:
@@ -189,6 +196,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /rooms/{roomId}/out-of-service:
     parameters:
@@ -211,6 +219,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /rooms/{roomId}/in-service:
     parameters:
@@ -232,6 +241,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /rooms/{roomId}/availability:
     parameters:
@@ -253,6 +263,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /bookings:
     post:
@@ -274,6 +285,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /bookings/mine:
     get:
@@ -291,6 +303,7 @@ paths:
               schema: { $ref: '#/components/schemas/BookingList' }
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /bookings/{bookingId}/cancel:
     parameters:
@@ -313,6 +326,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /admin/rooms:
     get:
@@ -326,6 +340,7 @@ paths:
               schema: { $ref: '#/components/schemas/RoomList' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /admin/bookings:
     get:
@@ -345,6 +360,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /admin/users:
     get:
@@ -370,6 +386,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /admin/users/{userId}/role:
     parameters:
@@ -401,6 +418,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /admin/audit-events:
     get:
@@ -430,6 +448,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
 components:
   securitySchemes:
@@ -486,7 +505,7 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     TooManyRequests:
-      description: TOO_MANY_ATTEMPTS (sign-in lockout) or RATE_LIMITED; see the Retry-After header (seconds).
+      description: TOO_MANY_ATTEMPTS (sign-in lockout) or RATE_LIMITED (NFR-010, applies to every operation); see the Retry-After header (seconds).
       headers:
         Retry-After:
           schema: { type: integer, minimum: 1 }

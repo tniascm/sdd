@@ -55,3 +55,24 @@ Looks good! A few things from trying it: the facilities office needs an admin pa
 
 Refinement made to the *wrapper* after V1's failure: the rule now explicitly covers files written
 by tools (browser logs) and steers the agent to curl/tests instead of a browser.
+
+### V2 — outcome (agent run: 34 tool calls)
+
+| Request in V2 | Delivered? | Note |
+|---|---|---|
+| Admin page: add rooms | ✅ | add only — **rooms cannot be edited or deleted** (agent's own admission) |
+| Close a room for maintenance without data loss | ✅ | date-range closures with reason; affected users get an on-page notice; DB auto-migrates from V1 |
+| Only @uni.example sign-ups | ✅ | exact domain match; agent *volunteered* the caveat that without email verification anyone can claim any address |
+| Data export / account deletion | ⚠️ | export includes sessions and failed logins; deletion **removes the user's bookings entirely** (destroys room-usage history — a decision nobody reviewed) |
+| Stop password guessing | ✅ | 5 failures / 15 min per email + 20 / IP; counted before verification; common-password list added unasked |
+| Admin role assignment | ⚠️ | only via a server-side script (`npm run make-admin`), no UI |
+| Tests | ✅ | 37/37 pass (re-run by us with `node --test`) |
+| Workspace rules | ⚠️ | stayed in the folder this time, but `npm` wrote debug logs to `~/.npm/_logs`; the agent noticed, reported it and switched to running `node` directly |
+
+Observations for the comparison:
+- The refined wrapper worked for the browser-log problem but a *new* side effect (npm logs) appeared —
+  instructions only fix the failure modes you already know about.
+- Each feedback round produced sensible features, but every round also introduced new unrequested
+  decisions (closure date ranges, notices, common-password list, booking deletion on erasure).
+  Requirements were being discovered *after* code existed, so each change touched DB migrations,
+  views and tests at once (13 files, +1121/−113 lines for V2).

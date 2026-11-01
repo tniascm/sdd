@@ -129,3 +129,48 @@ task descriptions. Implement US2 (auth) before US1 because booking needs a signe
   added; spec wording normalised; plan corrected; IDs cited in tasks → 55 tasks, 37/37 requirements mapped.
 - Assessment: this step found defects in artifacts written minutes earlier by the same AI — evidence
   that an AI-written plan still needs an explicit consistency pass before implementation.
+
+## SDD-P7 — `/speckit-implement` (Phase 1–2, fresh Implementer sub-agent)
+
+```text
+/speckit-implement Phase 1 and Phase 2 only — tasks T001–T019. (T020 belongs to the Verifier.)
+
+You are the **Implementer** in a Spec-Driven Development project that uses GitHub Spec Kit. […]
+1. Read and follow `.claude/skills/speckit-implement/SKILL.md` (that file IS the `/speckit-implement`
+   command). Its inputs are in `specs/001-room-booking/` […] Treat these as the source of truth.
+   Don't add behaviour they don't describe. If something in them looks wrong or contradictory,
+   don't silently deviate — implement the closest faithful reading and list the problem in your report.
+2. Execute T001–T019 in order, test-first where the task says so […] Mark each finished task [X].
+3. Use Node 26 […] install the exact versions listed in plan.md with `npm install --save-exact`.
+   TypeScript must be 6.0.3 (see research R1).
+
+Fixed interface — the Verifier is writing acceptance tests against this in parallel, so match it exactly:
+- ports.ts: `export interface Clock { now(): number }` …
+- config.ts: `export type Config = { port; dbFile; timeZone; opensAt; closesAt; allowedEmailDomains;
+  rateLimitPerMinute; sessionTtlMs; admin }` and `loadConfig(env)` …
+- container.ts: `buildContainer({ dbFile, clock, config, hasherParams? })` exposing config, clock, db,
+  bootstrapAdmin(), close() and the services …
+- http/app.ts: `createApp(container)`; routes under /api/v1; unknown /api paths → JSON 404 NOT_FOUND …
+
+Boundaries: write only package/config files, src/**, public/**, scripts/**, tests/unit/**,
+tests/integration/** (except concurrency.test.ts) and the [X] boxes in tasks.md. Do NOT edit
+tests/acceptance, tests/contract, tests/support, docs, vibe-prototype, .specify, .claude or other spec
+files. Commit per logical group with `git add <explicit paths>`, messages `feat(foundation): … (T0xx; FR-xxx)`.
+Report: tasks done, test summary, typecheck/lint, commits, spec problems found, deviations.
+```
+
+(Full text in the session transcript; elided parts are the file lists repeated from tasks.md.)
+
+- Reasoning: (1) the agent gets *the command file*, not a hand-written summary, so the Spec Kit workflow
+  itself drives it; (2) a **fixed interface** lets Verifier and Implementer work in parallel without
+  seeing each other's code; (3) explicit write-boundaries + "never `git add -A`" protect the
+  Verifier's tests and the parallel vibe agent's folder; (4) "report, don't silently deviate" turns
+  spec defects into amendments instead of hidden code decisions.
+
+## Verifier findings while writing tests from the spec (before any code existed)
+
+| # | Found while writing | Defect | Resolution |
+|---|---|---|---|
+| VF-1 | test harness (contract checker) | NFR-010 limits *every* operation, but the contract documented `429` only on register/login → a correct `429` elsewhere would be a contract violation | `429 TooManyRequests` added to all 21 operations in `openapi.yaml` |
+| VF-2 | US2-4 lockout test | data-model did not say whether attempts refused *during* a lock count as new failures — if they did, a user who keeps retrying would be locked forever | data-model amended: refused attempts are not failures, but are audit-logged |
+| VF-3 | US4-4 admin day view | first draft of the test asserted an ordering that FR-015 never specifies | test made order-independent (tests must not invent requirements either) |
