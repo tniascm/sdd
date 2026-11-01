@@ -454,6 +454,32 @@ signedInHandlers.push(() => {
   loadMine();
 });
 
+// ------------------------------------------------------------------ personal data (US5)
+
+$('#export-button').addEventListener('click', async () => {
+  try {
+    const data = await api('GET', '/me/export');
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = el('a', { href: url, download: 'roombook-export.json' });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStatus('Your data has been downloaded as roombook-export.json.');
+  } catch (err) {
+    if (err instanceof ApiError) setStatus(err.message, true);
+    else throw err;
+  }
+});
+
+onSubmit($('#erase-form'), async (values, form) => {
+  if (!window.confirm('Delete your account permanently? This cannot be undone.')) return;
+  await api('POST', '/me/erase', { password: values.password });
+  form.reset();
+  signedOut('Your account has been deleted.');
+});
+
 // ------------------------------------------------------------------ administration (US4)
 
 const ROLE_LABELS = { student: 'Student', staff: 'Staff', admin: 'Administrator' };

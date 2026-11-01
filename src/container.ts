@@ -65,7 +65,16 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   });
   const rooms = new RoomService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
   const bookings = new BookingService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
-  const accounts = new AccountService({ users: repos.users, uow, audit });
+  const accounts = new AccountService({
+    users: repos.users,
+    bookings: repos.bookings,
+    loginFailures: repos.loginFailures,
+    hasher,
+    tokens,
+    clock,
+    uow,
+    audit,
+  });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;

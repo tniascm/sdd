@@ -150,8 +150,8 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Implementation for User Story 5
 
-- [ ] T046 [US5] (Implementer) `account-service.export` (FR-018) and `erase` (FR-019: verify password; in one transaction cancel upcoming bookings `cancelledBy: 'system'` reason "Account deleted", set `purpose = NULL` on all the user's bookings, delete the user — sessions cascade, bookings `user_id` → NULL — and delete the user's login-failure rows; audit `user.erased` with id only)
-- [ ] T047 [US5] (Implementer) routes `GET /me/export`, `POST /me/erase`; UI account section (export download, delete with password)
+- [X] T046 [US5] (Implementer) `account-service.export` (FR-018) and `erase` (FR-019: verify password; in one transaction cancel upcoming bookings `cancelledBy: 'system'` reason "Account deleted", set `purpose = NULL` on all the user's bookings, delete the user — sessions cascade, bookings `user_id` → NULL — and delete the user's login-failure rows; audit `user.erased` with id only)
+- [X] T047 [US5] (Implementer) routes `GET /me/export`, `POST /me/erase`; UI account section (export download, delete with password)
 
 ---
 

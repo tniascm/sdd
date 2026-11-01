@@ -109,3 +109,9 @@ export const RoleChangeRequest = z.strictObject({
 export const AdminUsersQuery = z.strictObject({
   email: z.string().min(1, 'email must not be empty.').max(254, 'email must be at most 254 characters.').optional(),
 });
+
+// ------------------------------------------------------------------ personal data (US5)
+
+export const EraseRequest = z.strictObject({
+  password: z.string().min(1, 'Enter your password to confirm.').max(128, 'Password must be at most 128 characters.'),
+});

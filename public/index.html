@@ -58,6 +58,7 @@
       <nav class="section-nav" aria-label="Sections">
         <a href="#rooms-section">Find a room</a>
         <a href="#mine-section">My bookings</a>
+        <a href="#account-section">My account</a>
         <a href="#admin-section" data-admin-only hidden>Administration</a>
       </nav>
 
@@ -143,6 +144,27 @@
         <div class="card">
           <label class="inline" for="mine-include-all"><input type="checkbox" id="mine-include-all"> Show cancelled and past bookings</label>
           <ul id="mine-list" class="plain" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <!-- US5 personal data: FR-018 export, FR-019 erasure -->
+      <section id="account-section" aria-labelledby="account-heading">
+        <h2 id="account-heading">My account</h2>
+        <div class="columns">
+          <div class="card">
+            <h3>Download my data</h3>
+            <p>A JSON file with your profile and all your bookings.</p>
+            <button type="button" id="export-button">Download my data</button>
+          </div>
+          <form id="erase-form" class="card" novalidate>
+            <h3>Delete my account</h3>
+            <p>Your upcoming bookings are cancelled, your profile is erased and past bookings stay only as anonymous room-usage records. This cannot be undone.</p>
+            <p class="form-error" data-error-for="_form"></p>
+            <label for="erase-password">Confirm with your password</label>
+            <input id="erase-password" name="password" type="password" autocomplete="current-password" required>
+            <p class="field-error" data-error-for="password"></p>
+            <button type="submit" class="danger">Delete my account permanently</button>
+          </form>
         </div>
       </section>
 
