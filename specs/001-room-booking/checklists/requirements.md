@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — 2 remain (FR-016, FR-019), deferred to `/speckit-clarify`
+- [x] No [NEEDS CLARIFICATION] markers remain — resolved by `/speckit-clarify` session 2026-11-01
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)

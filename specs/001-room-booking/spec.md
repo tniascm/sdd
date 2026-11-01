@@ -4,9 +4,22 @@
 
 **Created**: 2026-11-01
 
-**Status**: Draft
+**Status**: Clarified
 
 **Input**: User description: "Build RoomBook, a web application and HTTP API that lets members of a university book shared study rooms. Actors: students, staff, facilities administrators. Students and staff register with their university email address and a password, sign in, browse rooms (name, building, capacity, equipment), see a room's free and booked times for a given day, book a room for a time slot, see their upcoming bookings and cancel them. Booking rules: bookings are in 30-minute steps inside opening hours (08:00–22:00 campus time), cannot start in the past, cannot overlap another booking of the same room, party size cannot exceed room capacity, and students have tighter limits than staff on booking length, how far ahead they can book and how many upcoming bookings they can hold. Facilities administrators manage rooms (add, edit, take out of service) and can see and cancel any booking. Because the system stores personal data of EU users, users can download their data and delete their account. Repeated failed sign-ins must be throttled, and security-relevant events must be audit-logged."
+
+## Clarifications
+
+### Session 2026-11-01
+
+Answers were given autonomously by the orchestrating agent acting as product owner, choosing the
+option `/speckit-clarify` itself recommended; the team should review them.
+
+- Q: What should happen to a room's future bookings when an administrator takes it out of service? → A: Cancel them automatically with reason "Room taken out of service"; bookings already in progress are unaffected.
+- Q: Should deleting an account cancel the user's upcoming bookings automatically, or be refused until the user cancels them? → A: Cancel them automatically with reason "Account deleted", then erase the account.
+- Q: Must an administrator give a reason when cancelling someone else's booking? → A: Yes, a reason of 1–200 characters, shown to the booking owner.
+- Q: How long are anonymous past bookings and audit events kept? → A: 12 months after the booking ends / the event is recorded; then permanently deleted by an operator-run maintenance task.
+- Q: Should there be a general per-client request limit in addition to the sign-in lockout? → A: Yes, 300 requests per minute per client address; excess requests get a "too many requests" answer with a retry time.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -117,8 +130,8 @@ it out of service, and confirm it can no longer be booked.
 2. **Given** a non-administrator, **When** they try any administrative operation, **Then** the
    request is refused as forbidden.
 3. **Given** an active room with future bookings, **When** an administrator takes it out of
-   service, **Then** it can no longer be booked and its existing future bookings are handled as
-   described in FR-016.
+   service, **Then** it can no longer be booked and its future bookings are cancelled with the
+   reason "Room taken out of service", visible to their owners.
 4. **Given** an administrator, **When** they view the bookings for a date, **Then** they see all
    rooms' bookings including who made each booking.
 5. **Given** an administrator, **When** they change a user's role to *staff*, **Then** that user's
@@ -144,7 +157,7 @@ reference the person.
    account, **Then** they can no longer sign in, their sessions end, their personal data is
    removed and their past bookings remain only as anonymous room-usage records.
 3. **Given** a user with upcoming bookings, **When** they delete their account, **Then** those
-   upcoming bookings are handled as described in FR-019.
+   bookings are cancelled and their slots become free for others.
 
 ---
 
@@ -166,6 +179,9 @@ reference the person.
 - A session used after sign-out, after expiry, or after the account is deleted (rejected).
 - The last remaining administrator trying to delete their account or lose the administrator role
   (rejected, so the system can never be left without an administrator).
+- An administrator cancelling a booking without a reason, or with a reason over 200 characters
+  (rejected).
+- A client sending more than 300 requests in one minute (refused with a retry time).
 
 ## Requirements *(mandatory)*
 
@@ -211,10 +227,11 @@ reference the person.
 - **FR-014**: Users MUST be able to cancel their own booking before it starts. Requests concerning
   another user's booking MUST be answered as if the booking did not exist.
 - **FR-015**: Administrators MUST be able to list all bookings for a campus-local date, including
-  booker display name and email, and cancel any booking that has not ended.
-- **FR-016**: When a room is taken out of service, its future bookings MUST be handled as follows:
-  [NEEDS CLARIFICATION: cancel them automatically, keep them, or block the action while future
-  bookings exist?]
+  booker display name and email, and cancel any booking that has not ended, giving a reason of
+  1–200 characters that is shown to the booking owner.
+- **FR-016**: When a room is taken out of service, all of its confirmed bookings that have not yet
+  started MUST be cancelled automatically with the reason "Room taken out of service"; bookings
+  already in progress are not affected.
 
 **Administration**
 
@@ -227,12 +244,13 @@ reference the person.
   bookings) in a machine-readable format.
 - **FR-019**: Users MUST be able to delete their account after re-entering their password. All
   sessions end, profile data is erased and past bookings are kept without any link to the person.
-  Upcoming bookings are handled as follows: [NEEDS CLARIFICATION: cancel them, or refuse deletion
-  until the user cancels them?]
+  Upcoming bookings are first cancelled automatically with the reason "Account deleted".
 - **FR-020**: System MUST record an audit event for: registration, successful and failed sign-in,
   lockout, sign-out, account deletion, role change, room creation/update/service change, and any
   cancellation by an administrator. Audit events MUST NOT contain passwords or session secrets.
   Administrators MUST be able to list audit events, newest first.
+- **FR-021**: Operators MUST be able to run a maintenance task that permanently deletes bookings
+  that ended more than 12 months ago and audit events older than 12 months.
 
 ### Non-Functional Requirements
 
@@ -258,6 +276,9 @@ reference the person.
   network or real clock; automated tests MUST cover at least 85 % of source lines.
 - **NFR-009 (Privacy)**: Only email, display name, role and bookings are stored about a person;
   room availability shown to non-administrators MUST NOT reveal who booked.
+- **NFR-010 (Security — resource consumption)**: Each client network address MUST be limited to
+  300 requests per minute; excess requests MUST be refused with a "too many requests" answer that
+  states when to retry.
 
 ### Key Entities
 
