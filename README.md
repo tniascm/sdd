@@ -13,14 +13,15 @@ This repository contains two builds of the same idea so they can be compared:
 
 | What | Where |
 |---|---|
-| Experience report (Markdown / Word / PDF) | [`docs/report/REPORT.md`](docs/report/REPORT.md), `docs/report/REPORT.docx`, `docs/report/REPORT.pdf` |
+| Experience report — submission version, 12 pages (Markdown / Word / PDF) | [`docs/report/REPORT.md`](docs/report/REPORT.md), `docs/report/REPORT.docx`, `docs/report/REPORT.pdf` |
+| Extended report (all details, reference only) | [`docs/report/REPORT-extended.md`](docs/report/REPORT-extended.md) |
 | Prompt logs (verbatim, with outcomes) | [`docs/prompts/vibe-prompts.md`](docs/prompts/vibe-prompts.md), [`docs/prompts/sdd-prompts.md`](docs/prompts/sdd-prompts.md) |
 | Audit log (all defects found and how they were fixed) | [`docs/evidence/audit-log.md`](docs/evidence/audit-log.md) |
 | Independent review, vibe audit, usability walkthrough | `docs/evidence/review-findings.md`, `docs/evidence/vibe-audit.md`, `docs/evidence/usability/` |
 | Test runs (red → green) and quality gates | `docs/evidence/test-run-*.txt`, `docs/evidence/final-gates/` |
 
 Rebuild the report after editing `REPORT.md`:
-`REPORT_TOOLS=<folder with docx@9 and marked@15 installed> node docs/report/build-report.mjs`, then print
+`REPORT_TOOLS=<folder with docx@9 and marked@15 installed> node docs/report/build-report.mjs [REPORT.md|REPORT-extended.md]`, then print
 `docs/report/REPORT.html` to PDF (e.g. headless Chrome `--print-to-pdf`).
 
 The rest of this file describes the specification-driven build. Students and staff register
