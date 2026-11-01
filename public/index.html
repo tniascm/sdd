@@ -55,6 +55,94 @@
 
     <!-- Signed in -->
     <div id="app-view" hidden>
+      <nav class="section-nav" aria-label="Sections">
+        <a href="#rooms-section">Find a room</a>
+        <a href="#mine-section">My bookings</a>
+      </nav>
+
+      <!-- FR-005 room list with filters -->
+      <section id="rooms-section" aria-labelledby="rooms-heading">
+        <h2 id="rooms-heading">Find a room</h2>
+        <form id="room-filter-form" class="card" novalidate>
+          <p class="form-error" data-error-for="_form"></p>
+          <div class="columns">
+            <div>
+              <label for="filter-capacity">Minimum capacity</label>
+              <input id="filter-capacity" name="minCapacity" type="number" min="1" max="50" inputmode="numeric">
+              <p class="field-error" data-error-for="minCapacity"></p>
+            </div>
+            <div>
+              <label for="filter-building">Building</label>
+              <input id="filter-building" name="building" type="text" maxlength="60">
+              <p class="field-error" data-error-for="building"></p>
+            </div>
+          </div>
+          <fieldset>
+            <legend>Required equipment</legend>
+            <label class="inline"><input type="checkbox" name="equipment" value="whiteboard"> Whiteboard</label>
+            <label class="inline"><input type="checkbox" name="equipment" value="projector"> Projector</label>
+            <label class="inline"><input type="checkbox" name="equipment" value="display-screen"> Display screen</label>
+            <label class="inline"><input type="checkbox" name="equipment" value="video-conferencing"> Video conferencing</label>
+          </fieldset>
+          <p class="field-error" data-error-for="equipment"></p>
+          <button type="submit">Search rooms</button>
+        </form>
+        <ul id="room-list" class="plain card" aria-live="polite"></ul>
+      </section>
+
+      <!-- FR-006 availability, FR-009 booking -->
+      <section id="book-section" aria-labelledby="book-heading" hidden>
+        <h2 id="book-heading">Book <span id="book-room-name"></span></h2>
+        <form id="availability-form" class="card" novalidate>
+          <p class="form-error" data-error-for="_form"></p>
+          <label for="availability-date">Date (campus time)</label>
+          <input id="availability-date" name="date" type="date" required>
+          <p class="field-error" data-error-for="date"></p>
+          <button type="submit">Show availability</button>
+        </form>
+        <div id="availability" class="card" aria-live="polite">
+          <h3>Availability</h3>
+          <p id="availability-summary" class="muted"></p>
+          <div class="columns">
+            <div><h4>Free</h4><ul id="free-list" class="plain"></ul></div>
+            <div><h4>Booked</h4><ul id="booked-list" class="plain"></ul></div>
+          </div>
+        </div>
+        <form id="booking-form" class="card" novalidate>
+          <h3>New booking</h3>
+          <p class="form-error" data-error-for="_form"></p>
+          <p class="field-error" data-error-for="roomId"></p>
+          <div class="columns">
+            <div>
+              <label for="booking-start">Start</label>
+              <select id="booking-start" name="start" required></select>
+              <p class="field-error" data-error-for="start"></p>
+            </div>
+            <div>
+              <label for="booking-end">End</label>
+              <select id="booking-end" name="end" required></select>
+              <p class="field-error" data-error-for="end"></p>
+            </div>
+            <div>
+              <label for="booking-party">Party size</label>
+              <input id="booking-party" name="partySize" type="number" min="1" max="50" value="1" inputmode="numeric" required>
+              <p class="field-error" data-error-for="partySize"></p>
+            </div>
+          </div>
+          <label for="booking-purpose">Purpose (optional, up to 100 characters)</label>
+          <input id="booking-purpose" name="purpose" type="text" maxlength="100">
+          <p class="field-error" data-error-for="purpose"></p>
+          <button type="submit">Book this slot</button>
+        </form>
+      </section>
+
+      <!-- FR-013 my bookings -->
+      <section id="mine-section" aria-labelledby="mine-heading">
+        <h2 id="mine-heading">My bookings</h2>
+        <div class="card">
+          <ul id="mine-list" class="plain" aria-live="polite"></ul>
+        </div>
+      </section>
     </div>
   </main>
 </body>

@@ -6,7 +6,9 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { AuditService } from './application/audit-service.ts';
 import { AuthService } from './application/auth-service.ts';
+import { BookingService } from './application/booking-service.ts';
 import type { Clock, PasswordHasher, Repositories, TokenService, UnitOfWork } from './application/ports.ts';
+import { RoomService } from './application/room-service.ts';
 import type { Config } from './config.ts';
 import { ScryptHasher, type ScryptParams } from './infrastructure/scrypt-hasher.ts';
 import { openDatabase } from './infrastructure/sqlite/database.ts';
@@ -33,6 +35,8 @@ export type Container = {
   tokens: TokenService;
   audit: AuditService;
   auth: AuthService;
+  rooms: RoomService;
+  bookings: BookingService;
   /** Creates the administrator from `config.admin` unless an account with that email exists. */
   bootstrapAdmin(): Promise<void>;
   close(): void;
@@ -57,6 +61,8 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     audit,
     config,
   });
+  const rooms = new RoomService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
+  const bookings = new BookingService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;
@@ -77,5 +83,5 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     if (db.isOpen) db.close();
   }
 
-  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, bootstrapAdmin, close };
+  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, bootstrapAdmin, close };
 }

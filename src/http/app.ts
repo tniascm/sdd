@@ -10,7 +10,9 @@ import { apiNotFound, createErrorHandler } from './error-handler.ts';
 import { createRateLimit } from './rate-limit.ts';
 import { adminRoutes } from './routes/admin.ts';
 import { authRoutes } from './routes/auth.ts';
+import { bookingRoutes } from './routes/bookings.ts';
 import { meRoutes } from './routes/me.ts';
+import { roomRoutes } from './routes/rooms.ts';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../../public/', import.meta.url));
 
@@ -51,6 +53,8 @@ function apiRouter(c: Container): express.Router {
   });
   api.use(authRoutes(c));
   api.use(meRoutes(c));
+  api.use(roomRoutes(c));
+  api.use(bookingRoutes(c));
   api.use(adminRoutes(c));
   return api;
 }

@@ -91,17 +91,17 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 - [ ] T026 [P] [US1] (Verifier) `tests/acceptance/us1-booking.test.ts`: US1-1 … US1-7 + edge cases (start = end, crossing midnight, after 22:00, room out of service, unknown room → 404, party size 0, purpose > 100 chars, unknown field, `<script>` purpose stored and returned as plain text, DST day availability)
 - [ ] T027 [P] [US1] (Verifier) `tests/integration/concurrency.test.ts`: 20 simultaneous `POST /bookings` for the same slot → exactly 1 × 201 and 19 × 409 `SLOT_UNAVAILABLE` (SC-003, NFR-006)
-- [ ] T028 [P] [US1] (Implementer, test first) `tests/unit/booking-rules.test.ts` (NFR-008 — rules tested without DB/clock): decision table per role with boundary values (30 min ok / 0 min `TOO_SHORT`; student 120 min ok / 150 `TOO_LONG`; staff 240 ok / 270 `TOO_LONG`; start exactly 7 days ahead ok / +30 min `TOO_FAR_AHEAD`; 3rd upcoming ok / 4th `QUOTA_REACHED`; 21:30–22:00 ok / 21:30–22:30 `OUTSIDE_OPENING_HOURS`)
-- [ ] T029 [P] [US1] (Implementer, test first) `tests/unit/availability.test.ts`
+- [X] T028 [P] [US1] (Implementer, test first) `tests/unit/booking-rules.test.ts` (NFR-008 — rules tested without DB/clock): decision table per role with boundary values (30 min ok / 0 min `TOO_SHORT`; student 120 min ok / 150 `TOO_LONG`; staff 240 ok / 270 `TOO_LONG`; start exactly 7 days ahead ok / +30 min `TOO_FAR_AHEAD`; 3rd upcoming ok / 4th `QUOTA_REACHED`; 21:30–22:00 ok / 21:30–22:30 `OUTSIDE_OPENING_HOURS`)
+- [X] T029 [P] [US1] (Implementer, test first) `tests/unit/availability.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T030 [US1] (Implementer) `src/domain/booking-rules.ts`: FR-010 ("start and end on a 30-minute boundary, last at least 30 minutes, start in the future, lie within opening hours (08:00–22:00 campus time) on a single campus-local day, and have a party size between 1 and the room capacity") and FR-012 limits; `overlaps` for FR-011; codes `IN_PAST`, `NOT_ON_SLOT_BOUNDARY`, `TOO_SHORT`, `TOO_LONG`, `OUTSIDE_OPENING_HOURS`, `TOO_FAR_AHEAD`, `QUOTA_REACHED`, `PARTY_TOO_LARGE`; `overlaps(a, b)` on half-open intervals
-- [ ] T031 [US1] (Implementer) `src/domain/availability.ts`: booked and free intervals inside the campus-local opening window of a date; booked intervals carry no booker identity (NFR-009)
-- [ ] T032 [US1] (Implementer) `src/application/room-service.ts`: `list` (in-service rooms; filters `minCapacity`, `building`, `equipment` all-of — FR-005), `availability` (FR-006; out-of-service or unknown room → `NOT_FOUND`)
-- [ ] T033 [US1] (Implementer) `src/application/booking-service.ts` `create`: whole check-and-insert inside `UnitOfWork.transaction` with **no `await`** inside (NFR-006); trigger `BOOKING_OVERLAP` → `SLOT_UNAVAILABLE`; room out of service → `ROOM_OUT_OF_SERVICE`; unknown room → `NOT_FOUND`; `listMine(include = 'upcoming' | 'all')` ordered by start (FR-013)
-- [ ] T034 [US1] (Implementer) `src/http/routes/rooms.ts` (`GET /rooms`, `GET /rooms/{roomId}/availability`) and `src/http/routes/bookings.ts` (`POST /bookings`, `GET /bookings/mine`) with strict zod schemas from the contract
-- [ ] T035 [US1] (Implementer) UI: room list with filters, availability view for a date, booking form, "My bookings" list
+- [X] T030 [US1] (Implementer) `src/domain/booking-rules.ts`: FR-010 ("start and end on a 30-minute boundary, last at least 30 minutes, start in the future, lie within opening hours (08:00–22:00 campus time) on a single campus-local day, and have a party size between 1 and the room capacity") and FR-012 limits; `overlaps` for FR-011; codes `IN_PAST`, `NOT_ON_SLOT_BOUNDARY`, `TOO_SHORT`, `TOO_LONG`, `OUTSIDE_OPENING_HOURS`, `TOO_FAR_AHEAD`, `QUOTA_REACHED`, `PARTY_TOO_LARGE`; `overlaps(a, b)` on half-open intervals
+- [X] T031 [US1] (Implementer) `src/domain/availability.ts`: booked and free intervals inside the campus-local opening window of a date; booked intervals carry no booker identity (NFR-009)
+- [X] T032 [US1] (Implementer) `src/application/room-service.ts`: `list` (in-service rooms; filters `minCapacity`, `building`, `equipment` all-of — FR-005), `availability` (FR-006; out-of-service or unknown room → `NOT_FOUND`)
+- [X] T033 [US1] (Implementer) `src/application/booking-service.ts` `create`: whole check-and-insert inside `UnitOfWork.transaction` with **no `await`** inside (NFR-006); trigger `BOOKING_OVERLAP` → `SLOT_UNAVAILABLE`; room out of service → `ROOM_OUT_OF_SERVICE`; unknown room → `NOT_FOUND`; `listMine(include = 'upcoming' | 'all')` ordered by start (FR-013)
+- [X] T034 [US1] (Implementer) `src/http/routes/rooms.ts` (`GET /rooms`, `GET /rooms/{roomId}/availability`) and `src/http/routes/bookings.ts` (`POST /bookings`, `GET /bookings/mine`) with strict zod schemas from the contract
+- [X] T035 [US1] (Implementer) UI: room list with filters, availability view for a date, booking form, "My bookings" list
 
 **Checkpoint**: MVP — US1 + US2 acceptance tests green, concurrency test green.
 
