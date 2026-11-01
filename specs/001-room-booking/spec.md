@@ -11,7 +11,7 @@
 ### Session 1
 
 Answers were given autonomously by the orchestrating agent acting as product owner, choosing the
-option `/speckit-clarify` itself recommended; the team should review them.
+option `/speckit-clarify` itself recommended; the team member reviewed and confirmed them.
 
 - Q: What should happen to a room's future bookings when an administrator takes it out of service? → A: Cancel them automatically with reason "Room taken out of service"; bookings already in progress are unaffected.
 - Q: Should deleting an account cancel the user's upcoming bookings automatically, or be refused until the user cancels them? → A: Cancel them automatically with reason "Account deleted", then erase the account.
