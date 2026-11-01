@@ -87,10 +87,56 @@ export class RoomService {
     });
   }
 
-  findOrThrow(roomId: string): Room {
-    const room = this.deps.rooms.findById(roomId);
-    if (!room) throw roomNotFound();
-    return room;
+  /** FR-007: edit name, building, capacity or equipment. */
+  update(actorUserId: string, roomId: string, patch: Partial<RoomInput>): Room {
+    const { rooms, uow, audit, clock } = this.deps;
+    return uow.transaction(() => {
+      const room = rooms.findById(roomId);
+      if (!room) throw roomNotFound();
+      if (patch.name !== undefined && patch.name.toLowerCase() !== room.name.toLowerCase()) {
+        if (rooms.findByName(patch.name)) throw roomNameTaken();
+      }
+      const updated: Room = {
+        ...room,
+        ...patch,
+        equipment: patch.equipment ? [...patch.equipment] : room.equipment,
+        updatedAt: clock.now(),
+      };
+      rooms.update(updated);
+      audit.record('room.updated', actorUserId, { type: 'room', id: room.id }, { fields: Object.keys(patch).sort() });
+      return updated;
+    });
+  }
+
+  /**
+   * FR-008, FR-016: the room disappears from the list and cannot be booked; its confirmed
+   * bookings that have not started are cancelled by the system. Bookings in progress stay.
+   */
+  takeOutOfService(actorUserId: string, roomId: string): { room: Room; cancelledBookings: number } {
+    const { rooms, bookings, uow, audit, clock } = this.deps;
+    return uow.transaction(() => {
+      const room = rooms.findById(roomId);
+      if (!room) throw roomNotFound();
+      const now = clock.now();
+      const updated: Room = { ...room, inService: false, updatedAt: now };
+      rooms.update(updated);
+      const cancelledBookings = bookings.cancelFutureForRoom(room.id, now, { at: now, by: 'system', reason: OUT_OF_SERVICE_REASON });
+      audit.record('room.out_of_service', actorUserId, { type: 'room', id: room.id }, { cancelledBookings });
+      return { room: updated, cancelledBookings };
+    });
+  }
+
+  /** FR-008: back in service; nothing else changes (cancelled bookings stay cancelled). */
+  putInService(actorUserId: string, roomId: string): Room {
+    const { rooms, uow, audit, clock } = this.deps;
+    return uow.transaction(() => {
+      const room = rooms.findById(roomId);
+      if (!room) throw roomNotFound();
+      const updated: Room = { ...room, inService: true, updatedAt: clock.now() };
+      rooms.update(updated);
+      audit.record('room.in_service', actorUserId, { type: 'room', id: room.id });
+      return updated;
+    });
   }
 }
 

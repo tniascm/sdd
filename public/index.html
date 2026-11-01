@@ -58,6 +58,7 @@
       <nav class="section-nav" aria-label="Sections">
         <a href="#rooms-section">Find a room</a>
         <a href="#mine-section">My bookings</a>
+        <a href="#admin-section" data-admin-only hidden>Administration</a>
       </nav>
 
       <!-- FR-005 room list with filters -->
@@ -142,6 +143,88 @@
         <div class="card">
           <label class="inline" for="mine-include-all"><input type="checkbox" id="mine-include-all"> Show cancelled and past bookings</label>
           <ul id="mine-list" class="plain" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <!-- US4 administration: FR-007, FR-008, FR-015, FR-017, FR-020 -->
+      <section id="admin-section" aria-labelledby="admin-heading" data-admin-only hidden>
+        <h2 id="admin-heading">Administration</h2>
+
+        <div class="card">
+          <h3 id="room-form-heading">Add a room</h3>
+          <form id="room-form" novalidate>
+            <p class="form-error" data-error-for="_form"></p>
+            <div class="columns">
+              <div>
+                <label for="room-name">Name</label>
+                <input id="room-name" name="name" type="text" maxlength="60" required>
+                <p class="field-error" data-error-for="name"></p>
+              </div>
+              <div>
+                <label for="room-building">Building</label>
+                <input id="room-building" name="building" type="text" maxlength="60" required>
+                <p class="field-error" data-error-for="building"></p>
+              </div>
+              <div>
+                <label for="room-capacity">Capacity (1–50)</label>
+                <input id="room-capacity" name="capacity" type="number" min="1" max="50" inputmode="numeric" required>
+                <p class="field-error" data-error-for="capacity"></p>
+              </div>
+            </div>
+            <fieldset>
+              <legend>Equipment</legend>
+              <label class="inline"><input type="checkbox" name="equipment" value="whiteboard"> Whiteboard</label>
+              <label class="inline"><input type="checkbox" name="equipment" value="projector"> Projector</label>
+              <label class="inline"><input type="checkbox" name="equipment" value="display-screen"> Display screen</label>
+              <label class="inline"><input type="checkbox" name="equipment" value="video-conferencing"> Video conferencing</label>
+            </fieldset>
+            <p class="field-error" data-error-for="equipment"></p>
+            <button type="submit" id="room-form-submit">Add room</button>
+            <button type="button" id="room-form-cancel" class="secondary" hidden>Stop editing</button>
+          </form>
+          <h3>All rooms</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Room</th><th scope="col">Capacity</th><th scope="col">Equipment</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+              <tbody id="admin-room-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Bookings of a day</h3>
+          <form id="admin-day-form" novalidate>
+            <p class="form-error" data-error-for="_form"></p>
+            <label for="admin-day-date">Date (campus time)</label>
+            <input id="admin-day-date" name="date" type="date" required>
+            <p class="field-error" data-error-for="date"></p>
+            <button type="submit">Show bookings</button>
+          </form>
+          <ul id="admin-day-list" class="plain" aria-live="polite"></ul>
+        </div>
+
+        <div class="card">
+          <h3>Users and roles</h3>
+          <form id="user-search-form" novalidate>
+            <p class="form-error" data-error-for="_form"></p>
+            <label for="user-search-email">Email contains</label>
+            <input id="user-search-email" name="email" type="search" maxlength="254">
+            <p class="field-error" data-error-for="email"></p>
+            <button type="submit">Find users</button>
+          </form>
+          <ul id="user-list" class="plain" aria-live="polite"></ul>
+        </div>
+
+        <div class="card">
+          <h3>Audit log (newest first)</h3>
+          <button type="button" id="audit-refresh">Load newest events</button>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">#</th><th scope="col">Time</th><th scope="col">Action</th><th scope="col">Actor</th><th scope="col">Target</th><th scope="col">Details</th></tr></thead>
+              <tbody id="audit-rows"></tbody>
+            </table>
+          </div>
+          <button type="button" id="audit-more" class="secondary" hidden>Load older events</button>
         </div>
       </section>
     </div>

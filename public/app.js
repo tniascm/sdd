@@ -454,6 +454,211 @@ signedInHandlers.push(() => {
   loadMine();
 });
 
+// ------------------------------------------------------------------ administration (US4)
+
+const ROLE_LABELS = { student: 'Student', staff: 'Staff', admin: 'Administrator' };
+let editingRoomId = null;
+let oldestAuditId = null;
+
+function equipmentText(list) {
+  return list.length ? list.map((e) => EQUIPMENT_LABELS[e] || e).join(', ') : '—';
+}
+
+async function loadAdminRooms() {
+  const { rooms } = await api('GET', '/admin/rooms');
+  const rows = $('#admin-room-rows');
+  rows.replaceChildren();
+  for (const room of rooms) {
+    const edit = el('button', { type: 'button', className: 'secondary', text: 'Edit' });
+    edit.setAttribute('aria-label', `Edit ${room.name}`);
+    edit.addEventListener('click', () => startEditRoom(room));
+    const toggle = el('button', { type: 'button', className: room.inService ? 'danger' : '', text: room.inService ? 'Take out of service' : 'Put back in service' });
+    toggle.setAttribute('aria-label', `${room.inService ? 'Take out of service' : 'Put back in service'}: ${room.name}`);
+    toggle.addEventListener('click', () => toggleService(room, toggle));
+    rows.append(el('tr', {}, [
+      el('td', {}, [el('strong', { text: room.name }), el('div', { className: 'muted', text: room.building })]),
+      el('td', { text: String(room.capacity) }),
+      el('td', { text: equipmentText(room.equipment) }),
+      el('td', { text: room.inService ? 'In service' : 'Out of service' }),
+      el('td', {}, [edit, ' ', toggle]),
+    ]));
+  }
+}
+
+function startEditRoom(room) {
+  const form = $('#room-form');
+  clearErrors(form);
+  editingRoomId = room.id;
+  form.elements.name.value = room.name;
+  form.elements.building.value = room.building;
+  form.elements.capacity.value = String(room.capacity);
+  for (const box of form.querySelectorAll('input[name="equipment"]')) box.checked = room.equipment.includes(box.value);
+  $('#room-form-heading').textContent = `Edit ${room.name}`;
+  $('#room-form-submit').textContent = 'Save changes';
+  $('#room-form-cancel').hidden = false;
+  form.elements.name.focus();
+}
+
+function stopEditRoom() {
+  const form = $('#room-form');
+  editingRoomId = null;
+  form.reset();
+  clearErrors(form);
+  $('#room-form-heading').textContent = 'Add a room';
+  $('#room-form-submit').textContent = 'Add room';
+  $('#room-form-cancel').hidden = true;
+}
+
+$('#room-form-cancel').addEventListener('click', stopEditRoom);
+
+onSubmit($('#room-form'), async (_values, form) => {
+  const data = new FormData(form);
+  const body = {
+    name: String(data.get('name') || ''),
+    building: String(data.get('building') || ''),
+    capacity: Number(data.get('capacity')),
+    equipment: data.getAll('equipment'),
+  };
+  const room = editingRoomId
+    ? await api('PATCH', `/rooms/${encodeURIComponent(editingRoomId)}`, body)
+    : await api('POST', '/rooms', body);
+  setStatus(editingRoomId ? `Saved ${room.name}.` : `Added ${room.name}.`);
+  stopEditRoom();
+  await Promise.all([loadAdminRooms(), loadRooms()]);
+});
+
+async function toggleService(room, button) {
+  if (room.inService && !window.confirm(`Take ${room.name} out of service? Its future bookings will be cancelled.`)) return;
+  button.disabled = true;
+  try {
+    const path = `/rooms/${encodeURIComponent(room.id)}/${room.inService ? 'out-of-service' : 'in-service'}`;
+    const result = await api('POST', path);
+    setStatus(room.inService
+      ? `${room.name} is out of service; ${result.cancelledBookings} future booking(s) cancelled.`
+      : `${room.name} is back in service.`);
+    await Promise.all([loadAdminRooms(), loadRooms(), loadMine()]);
+  } catch (err) {
+    button.disabled = false;
+    if (err instanceof ApiError) setStatus(err.message, true);
+    else throw err;
+  }
+}
+
+async function loadAdminDay() {
+  const form = $('#admin-day-form');
+  clearErrors(form);
+  try {
+    const day = await api('GET', `/admin/bookings?date=${encodeURIComponent($('#admin-day-date').value)}`);
+    state.timeZone = day.timeZone;
+    renderAdminDay(day.bookings);
+  } catch (err) {
+    if (err instanceof ApiError) showErrors(form, err);
+    else throw err;
+  }
+}
+
+function renderAdminDay(bookings) {
+  const list = $('#admin-day-list');
+  list.replaceChildren();
+  if (bookings.length === 0) {
+    list.append(el('li', { className: 'muted', text: 'No bookings on this date.' }));
+    return;
+  }
+  const now = Date.now();
+  for (const b of bookings) {
+    const who = b.booker ? `${b.booker.displayName} <${b.booker.email}>` : 'Deleted account';
+    const item = el('li', {}, [
+      el('div', {}, [
+        el('span', { className: b.status === 'cancelled' ? 'tag cancelled' : 'tag', text: b.status === 'cancelled' ? 'Cancelled' : 'Confirmed' }),
+        el('strong', { text: b.roomName }), ' ', `${formatTime(b.start)}–${formatTime(b.end)} · ${b.partySize} people`,
+      ]),
+      el('div', { className: 'muted', text: `Booked by ${who}` }),
+    ]);
+    if (b.purpose) item.append(el('div', { className: 'muted', text: `Purpose: ${b.purpose}` }));
+    if (b.status === 'cancelled' && b.cancelReason) item.append(el('div', { className: 'muted', text: `Reason: ${b.cancelReason}` }));
+    if (b.status === 'confirmed' && Date.parse(b.end) > now) item.append(adminCancelForm(b));
+    list.append(item);
+  }
+}
+
+function adminCancelForm(b) {
+  const id = `reason-${b.id}`;
+  const form = el('form', { id: `cancel-${b.id}`, novalidate: true }, [
+    el('p', { className: 'form-error', 'data-error-for': '_form' }),
+    el('label', { for: id, text: 'Reason shown to the person who booked (1–200 characters)' }),
+    el('input', { id, name: 'reason', type: 'text', maxlength: '200' }),
+    el('p', { className: 'field-error', 'data-error-for': 'reason' }),
+    el('button', { type: 'submit', className: 'danger', text: 'Cancel this booking' }),
+  ]);
+  onSubmit(form, async (values) => {
+    const body = values.reason ? { reason: values.reason } : {};
+    await api('POST', `/bookings/${encodeURIComponent(b.id)}/cancel`, body);
+    setStatus(`Cancelled the booking of ${b.roomName} at ${formatTime(b.start)}.`);
+    await Promise.all([loadAdminDay(), loadMine()]);
+  });
+  return form;
+}
+
+onSubmit($('#admin-day-form'), () => loadAdminDay());
+
+async function findUsers() {
+  const fragment = $('#user-search-email').value.trim();
+  const { users } = await api('GET', `/admin/users${fragment ? `?email=${encodeURIComponent(fragment)}` : ''}`);
+  const list = $('#user-list');
+  list.replaceChildren();
+  if (users.length === 0) list.append(el('li', { className: 'muted', text: 'No users found.' }));
+  for (const u of users) {
+    const selectId = `role-${u.id}`;
+    const select = el('select', { id: selectId, name: 'role' },
+      Object.entries(ROLE_LABELS).map(([value, label]) => el('option', { value, text: label, selected: value === u.role })));
+    const form = el('form', { id: `role-form-${u.id}`, novalidate: true }, [
+      el('div', {}, [el('strong', { text: u.displayName }), ' ', el('span', { className: 'muted', text: u.email })]),
+      el('p', { className: 'form-error', 'data-error-for': '_form' }),
+      el('label', { for: selectId, text: `Role of ${u.displayName}` }),
+      select,
+      el('p', { className: 'field-error', 'data-error-for': 'role' }),
+      el('button', { type: 'submit', text: 'Save role' }),
+    ]);
+    onSubmit(form, async (values) => {
+      const updated = await api('PUT', `/admin/users/${encodeURIComponent(u.id)}/role`, { role: values.role });
+      setStatus(`${updated.displayName} is now ${ROLE_LABELS[updated.role]}.`);
+      if (updated.id === state.user.id) signedIn(await api('GET', '/me'));
+    });
+    list.append(el('li', {}, [form]));
+  }
+}
+
+onSubmit($('#user-search-form'), () => findUsers());
+
+async function loadAudit(older = false) {
+  const query = older && oldestAuditId ? `?limit=50&beforeId=${oldestAuditId}` : '?limit=50';
+  const { events } = await api('GET', `/admin/audit-events${query}`);
+  const rows = $('#audit-rows');
+  if (!older) rows.replaceChildren();
+  for (const e of events) {
+    rows.append(el('tr', {}, [
+      el('td', { text: String(e.id) }),
+      el('td', { text: formatDateTime(e.at) }),
+      el('td', { text: e.action }),
+      el('td', { text: e.actorUserId || '—' }),
+      el('td', { text: e.targetType ? `${e.targetType} ${e.targetId}` : '—' }),
+      el('td', { text: Object.keys(e.details).length ? JSON.stringify(e.details) : '' }),
+    ]));
+  }
+  if (events.length) oldestAuditId = events[events.length - 1].id;
+  $('#audit-more').hidden = events.length < 50;
+}
+
+$('#audit-refresh').addEventListener('click', () => loadAudit(false));
+$('#audit-more').addEventListener('click', () => loadAudit(true));
+
+signedInHandlers.push((user) => {
+  if (user.role !== 'admin') return;
+  if (!$('#admin-day-date').value) $('#admin-day-date').value = campusDate(Date.now(), state.timeZone);
+  loadAdminRooms();
+  loadAudit(false);
+});
+
 // ------------------------------------------------------------------ formatting
 
 function formatDateTime(isoString) {

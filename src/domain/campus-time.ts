@@ -81,6 +81,13 @@ export function parseLocalDate(date: string): { year: number; month: number; day
   return { year, month, day };
 }
 
+/** The calendar date after `date` (`YYYY-MM-DD`). */
+export function nextLocalDate(date: string): string {
+  const { year, month, day } = parseLocalDate(date);
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  return `${pad(next.getUTCFullYear(), 4)}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+}
+
 /** Parses `HH:MM` (00:00–23:59) into minutes since midnight; throws RangeError otherwise. */
 export function parseLocalTime(time: string): number {
   const m = TIME_RE.exec(time);

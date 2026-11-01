@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { Container } from '../../container.ts';
 import { actorOf, requireAdmin, requireAuth } from '../auth-middleware.ts';
 import { intervalDto, roomDto } from '../presenters.ts';
-import { DateQuery, RoomCreateRequest, RoomIdParams, RoomListQuery } from '../schemas.ts';
+import { DateQuery, RoomCreateRequest, RoomIdParams, RoomListQuery, RoomUpdateRequest } from '../schemas.ts';
 
 export function roomRoutes(c: Container): Router {
   const r = Router();
@@ -17,6 +17,23 @@ export function roomRoutes(c: Container): Router {
   r.post('/rooms', requireAdmin, (req, res) => {
     const input = RoomCreateRequest.parse(req.body);
     res.status(201).json(roomDto(c.rooms.create(actorOf(req).userId, input)));
+  });
+
+  r.patch('/rooms/:roomId', requireAdmin, (req, res) => {
+    const { roomId } = RoomIdParams.parse(req.params);
+    const patch = RoomUpdateRequest.parse(req.body);
+    res.json(roomDto(c.rooms.update(actorOf(req).userId, roomId, patch)));
+  });
+
+  r.post('/rooms/:roomId/out-of-service', requireAdmin, (req, res) => {
+    const { roomId } = RoomIdParams.parse(req.params);
+    const { room, cancelledBookings } = c.rooms.takeOutOfService(actorOf(req).userId, roomId);
+    res.json({ room: roomDto(room), cancelledBookings });
+  });
+
+  r.post('/rooms/:roomId/in-service', requireAdmin, (req, res) => {
+    const { roomId } = RoomIdParams.parse(req.params);
+    res.json({ room: roomDto(c.rooms.putInService(actorOf(req).userId, roomId)) });
   });
 
   r.get('/rooms/:roomId/availability', (req, res) => {

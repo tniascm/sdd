@@ -26,8 +26,10 @@ export function bookingRoutes(c: Container): Router {
 
   r.post('/bookings/:bookingId/cancel', (req, res) => {
     const { bookingId } = BookingIdParams.parse(req.params);
-    CancelRequest.parse(req.body ?? {});
-    res.json(bookingDto(c.bookings.cancel(actorOf(req), bookingId)));
+    const { reason } = CancelRequest.parse(req.body ?? {});
+    const actor = actorOf(req);
+    const booking = actor.role === 'admin' ? c.bookings.adminCancel(actor, bookingId, reason) : c.bookings.cancel(actor, bookingId);
+    res.json(bookingDto(booking));
   });
 
   return r;

@@ -1,10 +1,11 @@
 /** Bookings: FR-009 … FR-015. */
 import { randomUUID } from 'node:crypto';
 import { checkBookingRules } from '../domain/booking-rules.ts';
+import { localToUtc, nextLocalDate, parseLocalDate } from '../domain/campus-time.ts';
 import { DomainError } from '../domain/errors.ts';
 import type { Actor, Booking } from '../domain/types.ts';
 import type { AuditService } from './audit-service.ts';
-import type { BookingRepository, BookingView, Clock, RoomRepository, UnitOfWork } from './ports.ts';
+import type { AdminBookingView, BookingRepository, BookingView, Clock, RoomRepository, UnitOfWork } from './ports.ts';
 
 export type BookingServiceDeps = {
   rooms: RoomRepository;
@@ -91,6 +92,39 @@ export class BookingService {
       bookings.cancel(booking.id, { at: now, by: 'owner', reason: null });
       return bookings.findById(booking.id) as BookingView;
     });
+  }
+
+  /**
+   * FR-015: administrators cancel any booking that has not ended. For someone else's booking
+   * a reason (1–200 characters) is required and shown to the owner; an administrator's own
+   * booking is an owner cancellation and needs none. Every such cancellation is audited (FR-020).
+   */
+  adminCancel(actor: Actor, bookingId: string, reason: string | undefined): BookingView {
+    const { bookings, uow, clock, audit } = this.deps;
+    return uow.transaction(() => {
+      const now = clock.now();
+      const booking = bookings.findById(bookingId);
+      if (!booking) throw bookingNotFound();
+      if (booking.status === 'cancelled') throw alreadyCancelled();
+      if (booking.end <= now) throw new DomainError('ALREADY_ENDED', 'This booking has already ended and can no longer be cancelled.');
+      const own = booking.userId === actor.userId;
+      if (!own && !reason) {
+        const message = 'Give a reason (1–200 characters); it is shown to the person who booked.';
+        throw new DomainError('REASON_REQUIRED', message, [{ field: 'reason', message }]);
+      }
+      bookings.cancel(booking.id, own ? { at: now, by: 'owner', reason: null } : { at: now, by: 'admin', reason: reason ?? null });
+      audit.record('booking.cancelled_by_admin', actor.userId, { type: 'booking', id: booking.id }, { roomId: booking.roomId, own });
+      return bookings.findById(booking.id) as BookingView;
+    });
+  }
+
+  /** FR-015: every booking (any status) starting on a campus-local date, with its booker. */
+  listForDate(date: string): { date: string; timeZone: string; bookings: AdminBookingView[] } {
+    const { bookings, config } = this.deps;
+    parseLocalDate(date);
+    const from = localToUtc(date, '00:00', config.timeZone);
+    const to = localToUtc(nextLocalDate(date), '00:00', config.timeZone);
+    return { date, timeZone: config.timeZone, bookings: bookings.listStartingBetween(from, to) };
   }
 
   /** FR-013: own bookings in start order; by default only upcoming ones. */

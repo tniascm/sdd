@@ -99,3 +99,13 @@ export const BookingsMineQuery = z.strictObject({
 export const CancelRequest = z.strictObject({
   reason: z.string().trim().min(1, 'Reason must not be empty.').max(200, 'Reason must be at most 200 characters.').optional(),
 });
+
+// ------------------------------------------------------------------ administration (US4)
+
+export const RoleChangeRequest = z.strictObject({
+  role: z.enum(['student', 'staff', 'admin'], 'role must be student, staff or admin.'),
+});
+
+export const AdminUsersQuery = z.strictObject({
+  email: z.string().min(1, 'email must not be empty.').max(254, 'email must be at most 254 characters.').optional(),
+});

@@ -1,6 +1,6 @@
 // T008 — campus-local time ⇄ UTC (FR-010, edge case "days on which campus time changes").
 import { describe, expect, it } from 'vitest';
-import { isOnSlotBoundary, localDate, localToUtc, wallClock } from '../../src/domain/campus-time.ts';
+import { isOnSlotBoundary, localDate, localToUtc, nextLocalDate, wallClock } from '../../src/domain/campus-time.ts';
 
 const HEL = 'Europe/Helsinki';
 const utc = (iso: string) => Date.parse(iso);
@@ -105,5 +105,15 @@ describe('isOnSlotBoundary — minute ∈ {0, 30} in campus time, no seconds or 
     // Asia/Kathmandu is UTC+5:45: 04:15Z = 10:00 local, 04:00Z = 09:45 local
     expect(isOnSlotBoundary(utc('2026-11-02T04:15:00.000Z'), 'Asia/Kathmandu')).toBe(true);
     expect(isOnSlotBoundary(utc('2026-11-02T04:00:00.000Z'), 'Asia/Kathmandu')).toBe(false);
+  });
+});
+
+describe('nextLocalDate', () => {
+  it('steps over month, year and leap-day boundaries', () => {
+    expect(nextLocalDate('2026-11-02')).toBe('2026-11-03');
+    expect(nextLocalDate('2026-11-30')).toBe('2026-12-01');
+    expect(nextLocalDate('2026-12-31')).toBe('2027-01-01');
+    expect(nextLocalDate('2028-02-28')).toBe('2028-02-29');
+    expect(() => nextLocalDate('2026-02-29')).toThrow(RangeError);
   });
 });

@@ -132,11 +132,11 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Implementation for User Story 4
 
-- [ ] T040 [US4] (Implementer) `room-service` create/update (FR-007; unique name case-insensitive → `ROOM_NAME_TAKEN`; "capacity (1–50)"; equipment from the four allowed values), `takeOutOfService` (FR-008; cancel confirmed bookings with `start > now`: `cancelledBy: 'system'`, reason "Room taken out of service" — FR-016), `putInService`, `listAll`; audit
-- [ ] T041 [US4] (Implementer) `booking-service.adminCancel` ("any booking that has not ended" → else `ALREADY_ENDED`; reason "1–200 characters" required when the booking is not the admin's own → `REASON_REQUIRED`; audit `booking.cancelled_by_admin`) and `listForDate` with booker `{ userId, displayName, email }` or `null` if anonymised (FR-015)
-- [ ] T042 [US4] (Implementer) `src/application/account-service.ts` `changeRole` (FR-017; `LAST_ADMIN`), `findUsers(emailFragment)` (max 100); audit
-- [ ] T043 [US4] (Implementer) `src/http/routes/admin.ts` (`/admin/rooms`, `/admin/bookings`, `/admin/users`, `/admin/users/{userId}/role`, `/admin/audit-events`) and room admin routes in `rooms.ts` (`POST /rooms`, `PATCH /rooms/{roomId}`, `/out-of-service`, `/in-service`)
-- [ ] T044 [US4] (Implementer) UI admin panel: rooms (create, edit, service toggle), day bookings with cancel + reason, user role change, audit list
+- [X] T040 [US4] (Implementer) `room-service` create/update (FR-007; unique name case-insensitive → `ROOM_NAME_TAKEN`; "capacity (1–50)"; equipment from the four allowed values), `takeOutOfService` (FR-008; cancel confirmed bookings with `start > now`: `cancelledBy: 'system'`, reason "Room taken out of service" — FR-016), `putInService`, `listAll`; audit
+- [X] T041 [US4] (Implementer) `booking-service.adminCancel` ("any booking that has not ended" → else `ALREADY_ENDED`; reason "1–200 characters" required when the booking is not the admin's own → `REASON_REQUIRED`; audit `booking.cancelled_by_admin`) and `listForDate` with booker `{ userId, displayName, email }` or `null` if anonymised (FR-015)
+- [X] T042 [US4] (Implementer) `src/application/account-service.ts` `changeRole` (FR-017; `LAST_ADMIN`), `findUsers(emailFragment)` (max 100); audit
+- [X] T043 [US4] (Implementer) `src/http/routes/admin.ts` (`/admin/rooms`, `/admin/bookings`, `/admin/users`, `/admin/users/{userId}/role`, `/admin/audit-events`) and room admin routes in `rooms.ts` (`POST /rooms`, `PATCH /rooms/{roomId}`, `/out-of-service`, `/in-service`)
+- [X] T044 [US4] (Implementer) UI admin panel: rooms (create, edit, service toggle), day bookings with cancel + reason, user role change, audit list
 
 ---
 

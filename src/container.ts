@@ -4,6 +4,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
+import { AccountService } from './application/account-service.ts';
 import { AuditService } from './application/audit-service.ts';
 import { AuthService } from './application/auth-service.ts';
 import { BookingService } from './application/booking-service.ts';
@@ -37,6 +38,7 @@ export type Container = {
   auth: AuthService;
   rooms: RoomService;
   bookings: BookingService;
+  accounts: AccountService;
   /** Creates the administrator from `config.admin` unless an account with that email exists. */
   bootstrapAdmin(): Promise<void>;
   close(): void;
@@ -63,6 +65,7 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   });
   const rooms = new RoomService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
   const bookings = new BookingService({ rooms: repos.rooms, bookings: repos.bookings, uow, audit, clock, config });
+  const accounts = new AccountService({ users: repos.users, uow, audit });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;
@@ -83,5 +86,5 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     if (db.isOpen) db.close();
   }
 
-  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, bootstrapAdmin, close };
+  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, accounts, bootstrapAdmin, close };
 }
