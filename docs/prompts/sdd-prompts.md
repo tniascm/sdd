@@ -192,3 +192,45 @@ Report: tasks done, test summary, typecheck/lint, commits, spec problems found, 
     semantics; new `ADMIN_DISPLAY_NAME` variable.
 - Lesson: the role split works in both directions — the Implementer caught a Verifier bug that
   would otherwise have pushed the Implementer to "fix" a correct rate limiter.
+
+## SDD-P8 — `/speckit-implement` Phases 3–7 + T050–T052 (same Implementer, resumed)
+
+```text
+/speckit-implement Phases 3–7 (US2 → US1 → US3 → US4 → US5) and Phase 8 tasks T050, T051, T052.
+[acknowledges the Phase-2 report point by point: Verifier bug fixed, lint scope, R12 decisions,
+data-model amendment, contract 429 change]
+Goal: every Verifier test turns green without editing it […] typecheck and lint clean, coverage ≥ 85 %.
+Rules: 1. follow speckit-implement and tasks.md order, test-first where stated; 2. never edit
+Verifier files — if a Verifier test looks wrong, implement the faithful reading of the spec and
+report the test ID with your reasoning; 3. UI = one static SPA, no inline scripts/styles/handlers,
+textContent for user text, <label> for every input, field errors next to the field named in
+error.details[].field, keyboard operable, works at 360 px, admin sections only for admins […]
+```
+
+- Reasoning: feed back what happened to the agent's own reports (it builds trust in the "report,
+  don't patch the test" rule), and translate NFR-007/NFR-005 into concrete, checkable UI rules.
+- Outcome (25 min, 146 tool calls in total for the agent): 10 commits (one per story + polish);
+  Verifier suite **68/71**; own + Verifier tests 274/277; lines 99.2 %; perf p95 4.3 ms.
+- What did not go to plan: the **3 failing tests were Verifier bugs** (VF-5 — US3 tests reused a
+  session across a 25-hour clock jump; FR-002 correctly expired it). The Implementer left them
+  untouched, proved the behaviour with its own integration test and suggested the fix. It also
+  reported 9 spec ambiguities, which became research R13, and one contradiction in the data-model
+  lockout wording (corrected). It ran its own 360-px browser walkthrough and fixed 3 UI bugs
+  (e.g. CSS `display` overriding `hidden`, which could have revealed admin-only elements).
+
+## SDD-P9 — `/speckit-implement` fix review findings (same Implementer, resumed)
+
+```text
+/speckit-implement Fix the findings from the independent review and the usability walkthrough.
+The spec was amended first; implement the amended spec. […] Re-read the amended spec texts first:
+spec.md FR-004, FR-019, FR-020, FR-021, NFR-002, NFR-004, NFR-005, NFR-007 […] research.md R14.
+What to fix: R-1 (High): record the attempt as a failure in the same synchronous step as the lock
+check, before `await hasher.verify`, and delete it when the password is correct. No concurrent burst
+may get more than 5 password checks per lock window […] R-2 PRAGMA secure_delete + WAL checkpoint
+[…] U-1 rebuild End when Start changes […] R-13 and R-14 are accepted risks — no code change.
+Done when: review-regressions 12/12 green, full Verifier suite green, coverage ≥ 85 %, typecheck,
+lint and npm audit clean.
+```
+
+- Reasoning: the fix request points at **amended spec text and red tests**, not at code — the fix
+  is defined by the specification, and "done" is defined by the Verifier's tests.
