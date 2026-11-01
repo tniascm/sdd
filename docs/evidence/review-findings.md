@@ -44,3 +44,44 @@ Reviewer: a fresh AI reviewer with no part in the implementation, 2026-11-01, co
 ## Verdict on SC-005
 
 **Not met.** R-1 is an open high-severity issue. The specified brute-force control fails under ordinary concurrency, which is broken authentication (OWASP API2). The constitution's Principle IV names this explicitly. Re-review after R-1 is fixed and a concurrent regression test is in place. Before release, R-2, R-3 and R-4 should be fixed or formally accepted in `docs/evidence/audit-log.md`. Until R-2 is fixed, SC-006 is not met either.
+
+## Re-review (2026-11-01, branch `001-room-booking` at `8a11e5b`)
+
+Same reviewer, my own probes rather than the new tests. The suite is green (303/303), and no existing assertion was weakened (only additions). New probes p7–p11 are in the same scratchpad folder. R-1 and R-7 were run on a real HTTP server with production scrypt (N=2^15, r=8, p=3), the real clock and 300 req/min. R-2 was checked on a file database in WAL mode, without any manual checkpoint. R-11 was checked in a real browser.
+
+| ID | Status | Evidence |
+|---|---|---|
+| R-1 | **Fixed** | The lock check and the failure insert now run in one synchronous transaction (`src/application/password-attempts.ts:41-47`). p7, 100 parallel logins: correct password **last** gave 5 × 401 and 95 × 429; the correct attempt got 429 and no session was issued. Correct password **first** gave 1 × 200, 4 × 401 and 95 × 429. An unknown email gave the same 5 × 401 then 429 pattern, so the lock does not reveal whether an account exists. Exactly 5 passwords were checked in each burst. |
+| R-2 | **Fixed** (see N-1) | p8, real erase flow, scenario 1, and scenario 2 with 400 more accounts written afterwards: while running, `.db` contains neither the email nor the display name and `-wal` is 0 B; after close, `.db` is clean and the WAL is gone. |
+| R-3 | **Fixed** (residual accepted) | p10: `auth.login.failed` details are `{}`, with the target only for existing accounts. p8: no `emailHash` remains anywhere after erasure. Residual: `login_failures` still keys rows by an unsalted SHA-256 of the raw input; I confirmed this for a password typed into the email field. No API exposes the table, rows are purged after 24 h, and research R14 accepts the residual. |
+| R-4 | **Fixed** | p10: the shipped `.env.example` is rejected ("must be set together"), the old placeholder is rejected, and an own password is accepted. |
+| R-5 | **Fixed** | p10: login, export and a 401 all carry `Cache-Control: no-store`. |
+| R-6 | **Fixed-partially** / proxy and IPv6 **accepted** | p10: one hit 61 s later reduced 200 000 windows to 1, but 200 000 distinct addresses within 1 s still create 200 000 entries. Memory is bounded per window, not capped. Proxy and IPv6 are accepted (research R14, `audit-log.md:45`). See N-2. |
+| R-7 | **Fixed** | p7b (fresh server): 30 parallel wrong `/me/erase` passwords gave 5 × 403 and 25 × 429 `TOO_MANY_ATTEMPTS`. 40 parallel requests mixing sign-in and erase on one account gave 3 × 401 + 2 × 403 (5 checks in total, one shared counter) and 35 × 429. |
+| R-8 | **Fixed** | p10: dates 0050-01-01, 1999-12-31 and 2100-01-01 give 400 on both endpoints; 2000-01-01 and 2099-12-31 give 200. Booking start times in years 0050, 2150 and 9999 give 422; no 500 was logged. |
+| R-9 | **Fixed** | p10, two days later: purge deleted 4 ended sessions and 1 stale failure; the active session (200) and the recent failure were kept. The purge still runs only when an operator starts it, as specified. |
+| R-10 | **Fixed** | p8: after erasure, the admin-cancelled booking has `cancel_reason = null`, and the display name is absent from both files. |
+| R-11 | **Fixed** | Browser test with campus zone Pacific/Auckland and the browser in Europe/Helsinki. Right after sign-in, with no room opened, "My bookings" showed "Tue, 3 Nov 2026, 10:00–11:00", the booked campus time (21:00Z). The session-expiry message was also in campus time. Sign-out cleared the new erase-account fields and the token. |
+| R-12 | **Fixed** | p10: the CSP now includes `base-uri 'none'; form-action 'self'`. |
+| R-13 | **Accepted risk** | research R14; `audit-log.md:52`. Human sign-off is still pending. |
+| R-14 | **Accepted risk** | research R14; `audit-log.md:53`, marked as a team decision [TEAM]. |
+
+### New findings
+
+| ID | Severity | Category | Finding | Evidence | Suggested fix |
+|---|---|---|---|---|---|
+| N-1 | Low | privacy / reliability | **The post-erasure flush can stall the server and fail silently.** If any other connection holds a read transaction (a backup, a `sqlite3` shell, `npm run purge`), `wal_checkpoint(TRUNCATE)` waits the full `busy_timeout` (5 s) synchronously on the main thread, freezing the whole server. It then returns `busy: 1`, which `flush()` ignores, and the erase answers 204 while the WAL still holds the erased email and display name. The data stays there until a later full checkpoint or shutdown. | `src/infrastructure/sqlite/storage-flusher.ts:16-18`. p8 scenario 3: erase returned 204 after 5,171 ms; `-wal` was 416 KB and contained email = true, name = true while running (clean after close). p9: the checkpoint returned `{busy:1, log:51, checkpointed:51}` after 5,214 ms, and a 200 ms timer fired after 5,193 ms. | Checkpoint without a long busy wait. Check `busy`; if it is set, retry asynchronously until the WAL is truncated, and log failures. Document that backups use `VACUUM INTO` or short read transactions. |
+| N-2 | Info | correctness | **Limiter eviction now assumes a monotonic clock.** The per-key expiry reset was removed. The system clock is `Date.now()`, so after a backward clock step of J seconds, a client whose window has ended is still refused (`Retry-After: 1`) for up to J seconds. | `src/http/rate-limit.ts:31-35`. p10: limit 1, clock stepped back 50 s; B was still refused at 111 000 although its window ended at 110 000. | Keep the `now >= w.start + windowMs` reset in `hit()`, or drive the limiter from `performance.now()`. |
+
+**New code checked and found OK**
+- `password-attempts.ts`: refused attempts are still not recorded, a correct password clears the failures, and sign-in and erasure share one counter.
+- By design (FR-019 amendment), wrong deletion passwords from a stolen session also lock sign-in. An attacker who knows the email could already do that.
+- `/health` adds only the campus time zone, which the availability response already shows.
+- UI: the new fields use `textContent` and `.value`, there are no new HTML sinks, and the same-origin `/health` fetch is allowed by the CSP.
+- `secure_delete` and the purge statements are parameterised, with no SQL concatenation.
+
+### Final verdict
+
+**SC-005: met.** No high-severity issue remains open. R-1 is fixed and held under real concurrency with production parameters. What remains is N-1 (Low), N-2 (Info) and the accepted risks R-6 (proxy/IPv6), R-13 and R-14. Under constitution gate 5, those risks still need the human sign-off in `docs/evidence/audit-log.md` before merge.
+
+**SC-006: holds in normal operation.** After erasure, neither the email nor the display name is in the database files (p8, scenarios 1–2). The guarantee is not met while another connection holds a read transaction at the moment of erasure (N-1): the WAL keeps the data until a later checkpoint or shutdown. Fixing N-1 removes that gap.

@@ -9,6 +9,20 @@ This repository contains two builds of the same idea so they can be compared:
 | `vibe-prototype/` | Vibe coding: short natural-language prompts, accept-and-iterate |
 | repository root (`src/`, `tests/`, `specs/`) | Specification-Driven Development with GitHub Spec Kit v1.2.5 |
 
+**Report and evidence**
+
+| What | Where |
+|---|---|
+| Experience report (Markdown / Word / PDF) | [`docs/report/REPORT.md`](docs/report/REPORT.md), `docs/report/REPORT.docx`, `docs/report/REPORT.pdf` |
+| Prompt logs (verbatim, with outcomes) | [`docs/prompts/vibe-prompts.md`](docs/prompts/vibe-prompts.md), [`docs/prompts/sdd-prompts.md`](docs/prompts/sdd-prompts.md) |
+| Audit log (all defects found and how they were fixed) | [`docs/evidence/audit-log.md`](docs/evidence/audit-log.md) |
+| Independent review, vibe audit, usability walkthrough | `docs/evidence/review-findings.md`, `docs/evidence/vibe-audit.md`, `docs/evidence/usability/` |
+| Test runs (red → green) and quality gates | `docs/evidence/test-run-*.txt`, `docs/evidence/final-gates/` |
+
+Rebuild the report after editing `REPORT.md`:
+`REPORT_TOOLS=<folder with docx@9 and marked@15 installed> node docs/report/build-report.mjs`, then print
+`docs/report/REPORT.html` to PDF (e.g. headless Chrome `--print-to-pdf`).
+
 The rest of this file describes the specification-driven build. Students and staff register
 with a university email address, find a room, see its free and booked times for a day and
 book a slot under role-based limits. Facilities administrators manage rooms, roles and any
