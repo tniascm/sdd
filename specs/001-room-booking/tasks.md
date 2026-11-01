@@ -28,11 +28,11 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 (Implementer) Create `package.json` (`"type": "module"`, `"engines": { "node": ">=24" }`) with exact pinned versions from plan.md Technical Context (express 5.3.0, zod 4.6.7, helmet 8.3.0; dev: typescript 6.0.3, vitest 5.0.5, @vitest/coverage-v8 5.0.5, supertest 7.3.1, @types/supertest, @types/express, @types/node, ajv 8.20.0, yaml 2.9.1, eslint 10.14.0, typescript-eslint 8.72.1) and scripts `start`, `seed`, `purge`, `perf`, `test`, `test:unit`, `test:integration`, `test:contract`, `test:acceptance`, `test:coverage`, `typecheck`, `lint`
-- [ ] T002 [P] (Implementer) Create `tsconfig.json`: `strict`, `noEmit`, `erasableSyntaxOnly`, `allowImportingTsExtensions`, `verbatimModuleSyntax`, `module`/`moduleResolution` `nodenext`, `target` `es2024`, includes `src`, `tests`, `scripts`
-- [ ] T003 [P] (Implementer) Create `vitest.config.ts` (NFR-008; node environment; coverage provider v8 over `src/**`, excluding `src/server.ts` and `src/cli/**`; threshold `lines: 85`)
-- [ ] T004 [P] (Implementer) Create `eslint.config.js` (typescript-eslint recommended, non-type-aware), `.env.example` (variables from quickstart.md), add `data/` to `.gitignore`
-- [ ] T005 (Implementer) Create the directory skeleton from plan.md Project Structure
+- [X] T001 (Implementer) Create `package.json` (`"type": "module"`, `"engines": { "node": ">=24" }`) with exact pinned versions from plan.md Technical Context (express 5.3.0, zod 4.6.7, helmet 8.3.0; dev: typescript 6.0.3, vitest 5.0.5, @vitest/coverage-v8 5.0.5, supertest 7.3.1, @types/supertest, @types/express, @types/node, ajv 8.20.0, yaml 2.9.1, eslint 10.14.0, typescript-eslint 8.72.1) and scripts `start`, `seed`, `purge`, `perf`, `test`, `test:unit`, `test:integration`, `test:contract`, `test:acceptance`, `test:coverage`, `typecheck`, `lint`
+- [X] T002 [P] (Implementer) Create `tsconfig.json`: `strict`, `noEmit`, `erasableSyntaxOnly`, `allowImportingTsExtensions`, `verbatimModuleSyntax`, `module`/`moduleResolution` `nodenext`, `target` `es2024`, includes `src`, `tests`, `scripts`
+- [X] T003 [P] (Implementer) Create `vitest.config.ts` (NFR-008; node environment; coverage provider v8 over `src/**`, excluding `src/server.ts` and `src/cli/**`; threshold `lines: 85`)
+- [X] T004 [P] (Implementer) Create `eslint.config.js` (typescript-eslint recommended, non-type-aware), `.env.example` (variables from quickstart.md), add `data/` to `.gitignore`
+- [X] T005 (Implementer) Create the directory skeleton from plan.md Project Structure
 
 ---
 

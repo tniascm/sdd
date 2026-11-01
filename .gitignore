@@ -7,3 +7,8 @@ coverage/
 .env
 .DS_Store
 dist/
+data/
+build/
+*.log
+.env.*
+!.env.example
