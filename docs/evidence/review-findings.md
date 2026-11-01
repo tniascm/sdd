@@ -1,6 +1,6 @@
 # Independent review: RoomBook (spec 001), release gate SC-005
 
-Reviewer: a fresh AI reviewer with no part in the implementation, at commit `7cd4343`. Scope: `src/`, `public/`, `scripts/`, `src/cli/`
+Reviewer: a fresh AI reviewer with no part in the implementation, after all user stories were complete. Scope: `src/`, `public/`, `scripts/`, `src/cli/`
 (`vibe-prototype/` excluded). Baseline: 277/277 tests green. Probes p1–p6 are throw-away scripts kept outside the repo
 (a temporary folder outside the repository). Each finding below states its reproduction.
 
@@ -33,7 +33,7 @@ Reviewer: a fresh AI reviewer with no part in the implementation, at commit `7cd
 - **Sessions:** 256-bit random token, stored as SHA-256, 8-hour expiry, revoked on sign-out. Erasure cascades to sessions (the old token gets 401, p2). The role is re-read on every request.
 - **Passwords:** scrypt N=2^15, r=8, p=3 (an OWASP parameter set), 16-byte salt, compared with `timingSafeEqual`. Login takes 133 ms for a known email and 133 ms for an unknown one; only the first unknown-email login after start-up is slower, once. Unknown emails get the same error and the same lockout.
 - **Errors:** a 500 has a generic body. Malformed or oversized JSON gets 400. No stack traces or SQL reach the client.
-- **Secrets and dependencies:** git history contains only `.env.example`, and `.env` is gitignored. `npm audit --omit=dev` finds 0 vulnerabilities (express 5.3.0, helmet 8.3.0, zod 4.6.7).
+- **Secrets and dependencies:** the repository contains only `.env.example`, and `.env` is gitignored. `npm audit --omit=dev` finds 0 vulnerabilities (express 5.3.0, helmet 8.3.0, zod 4.6.7).
 - **Booking rules (p4):** 30-minute boundaries, a 22:00 end, crossing midnight, start = end, end before start, the 2 h and 7-day student limits, and both Helsinki DST days (08:00 maps correctly to 05:00Z or 06:00Z).
 - **Transaction and trigger:** `create()` has no `await` between check and insert. The trigger rejects overlap and allows back-to-back bookings (p6). A concurrent duplicate registration gives 1 × 201 and 9 × 409.
 - **Cancellation:** an owner can cancel before the start. An admin can cancel before the end, with a trimmed reason of 1–200 characters. Taking a room out of service cancels only bookings with `start > now`.
@@ -45,7 +45,7 @@ Reviewer: a fresh AI reviewer with no part in the implementation, at commit `7cd
 
 **Not met.** R-1 is an open high-severity issue. The specified brute-force control fails under ordinary concurrency, which is broken authentication (OWASP API2). The constitution's Principle IV names this explicitly. Re-review after R-1 is fixed and a concurrent regression test is in place. Before release, R-2, R-3 and R-4 should be fixed or formally accepted in `docs/evidence/audit-log.md`. Until R-2 is fixed, SC-006 is not met either.
 
-## Re-review (branch `001-room-booking` at `8a11e5b`)
+## Re-review (after the fixes)
 
 Same reviewer, my own probes rather than the new tests. The suite is green (303/303), and no existing assertion was weakened (only additions). New probes p7–p11 are in the same scratchpad folder. R-1 and R-7 were run on a real HTTP server with production scrypt (N=2^15, r=8, p=3), the real clock and 300 req/min. R-2 was checked on a file database in WAL mode, without any manual checkpoint. R-11 was checked in a real browser.
 

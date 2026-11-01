@@ -177,9 +177,9 @@ Report: tasks done, test summary, typecheck/lint, commits, spec problems found, 
 
 ### SDD-P7 — outcome
 
-- T001–T019 done (100 tool calls); 7 commits, each staged with explicit paths and
+- T001–T019 done (100 tool calls); commits staged with explicit paths and
   referencing task + requirement IDs. Own tests: 148 passed, line coverage 98.9 %; typecheck clean.
-  Test-first evidence for T008/T010/T011/T012/T017 (red → green logs; kept in the git history).
+  Test-first evidence for T008/T010/T011/T012/T017 (red → green logs, not included in the submission).
 - The Verifier suite was **red for the right reason**: 71/71 failing at sign-in (`POST /auth/login`
   → 404, rejected by the contract checker) — `docs/evidence/test-run-1-verifier-red.txt`.
 - The Implementer **reported instead of silently deviating** (as instructed) — 6 points, of which
@@ -209,7 +209,7 @@ error.details[].field, keyboard operable, works at 360 px, admin sections only f
 
 - Reasoning: feed back what happened to the agent's own reports (it builds trust in the "report,
   don't patch the test" rule), and translate NFR-007/NFR-005 into concrete, checkable UI rules.
-- Outcome (146 tool calls in total for the agent): 10 commits (one per story + polish);
+- Outcome (146 tool calls in total for the agent): one commit per story + polish;
   Verifier suite **68/71**; own + Verifier tests 274/277; lines 99.2 %; perf p95 4.3 ms.
 - What did not go to plan: the **3 failing tests were Verifier bugs** (VF-5 — US3 tests reused a
   session across a 25-hour clock jump; FR-002 correctly expired it). The Implementer left them
