@@ -78,7 +78,7 @@ New findings from the re-review — **open at release**, recorded per constituti
 
 | ID | Sev. | Finding | Planned resolution | Owner |
 |---|---|---|---|---|
-| N-1 | Low | After erasure, `wal_checkpoint(TRUNCATE)` blocks the server for the 5 s busy timeout if another connection (backup, `sqlite3` shell, `npm run purge`) is reading; the "busy" result is ignored and the WAL keeps the erased email/name until the next checkpoint (measured: 5,171 ms erase, 416 KB WAL containing both strings) | check the checkpoint result; retry in the background with a short timeout; document that backups must use SQLite's online backup API; add a regression test with a concurrent reader | team member — accepted |
+| N-1 | Low | After erasure, `wal_checkpoint(TRUNCATE)` blocks the server for the 5 s busy timeout if another connection (backup, `sqlite3` shell, `npm run purge`) is reading; the "busy" result is ignored and the WAL keeps the erased email/name until the next checkpoint (measured: 5,171 ms erase, 416 KB WAL containing both strings) | check the checkpoint result; retry in the background with a short timeout; document that backups must use SQLite's online backup API; add a regression test with a concurrent reader | fixed — issue #1 (non-blocking checkpoint with background retry, research R15) |
 | N-2 | Info | Rate-limiter eviction assumes a monotonic clock; after the system clock steps back by J s, an expired window can keep refusing a client for up to J s | keep the per-key expiry check in `hit()` or use `performance.now()` | team member — accepted |
 
 ## 6. Human sign-off
@@ -88,3 +88,6 @@ One-person team — the sole member signs for all roles.
 | Role | Name | Decision on accepted risks R-6 (proxy/IPv6), R-13, R-14 and open N-1, N-2 | Date | Signature |
 |---|---|---|---|---|
 | Specifier · Prompt engineer · Verifier | sole team member (named in the submitted report) | clarification answers confirmed; R-6, R-13, R-14, N-1, N-2 accepted | date of this commit | signed |
+
+**Update:** N-1, accepted at sign-off, was subsequently fixed (issue #1; FR-019 amended, research R15,
+regression tests in `tests/integration/erasure-checkpoint.test.ts`).
