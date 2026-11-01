@@ -20,8 +20,8 @@ export type Config = {
 
 /** FR-002: a session expires 8 hours after sign-in. */
 export const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-/** Display name of the administrator created from ADMIN_EMAIL / ADMIN_PASSWORD. */
-export const ADMIN_DISPLAY_NAME = 'Administrator';
+/** Default display name of the administrator created from ADMIN_EMAIL / ADMIN_PASSWORD (research R12). */
+export const DEFAULT_ADMIN_DISPLAY_NAME = 'Administrator';
 
 export const DEFAULTS = Object.freeze({
   PORT: '3000',
@@ -123,5 +123,10 @@ function admin(env: NodeJS.ProcessEnv): Config['admin'] {
   if (password.length < 12 || password.length > 128 || password.toLowerCase() === email) {
     throw new ConfigError('ADMIN_PASSWORD must be 12–128 characters and not equal to ADMIN_EMAIL');
   }
-  return { email, password, displayName: ADMIN_DISPLAY_NAME };
+  // FR-001 display-name rule: 1–60 characters after trimming, no control characters.
+  const displayName = value(env, 'ADMIN_DISPLAY_NAME') ?? DEFAULT_ADMIN_DISPLAY_NAME;
+  if (displayName.length > 60 || /\p{Cc}/u.test(displayName)) {
+    throw new ConfigError('ADMIN_DISPLAY_NAME must be 1–60 characters without control characters');
+  }
+  return { email, password, displayName };
 }

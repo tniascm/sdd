@@ -27,6 +27,7 @@ describe('loadConfig', () => {
       RATE_LIMIT_PER_MINUTE: '50',
       ADMIN_EMAIL: ' Admin@Uni.Example ',
       ADMIN_PASSWORD: 'a very long secret',
+      ADMIN_DISPLAY_NAME: ' Facilities Office ',
     });
     expect(config).toMatchObject({
       port: 8080,
@@ -36,8 +37,9 @@ describe('loadConfig', () => {
       closesAt: '21:00',
       allowedEmailDomains: ['uni.example', 'staff.uni.example'],
       rateLimitPerMinute: 50,
-      admin: { email: 'admin@uni.example', password: 'a very long secret', displayName: 'Administrator' },
+      admin: { email: 'admin@uni.example', password: 'a very long secret', displayName: 'Facilities Office' },
     });
+    expect(loadConfig({ ADMIN_EMAIL: 'a@uni.example', ADMIN_PASSWORD: 'a very long secret' }).admin?.displayName).toBe('Administrator');
     expect(loadConfig({ PORT: '', CAMPUS_TIME_ZONE: '  ' })).toMatchObject({ port: 3000, timeZone: 'Europe/Helsinki' });
   });
 
@@ -58,6 +60,8 @@ describe('loadConfig', () => {
     [{ ADMIN_EMAIL: 'not-an-email', ADMIN_PASSWORD: 'a very long secret' }, /ADMIN_EMAIL/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'short' }, /ADMIN_PASSWORD/],
     [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'ADMIN@uni.example' }, /ADMIN_PASSWORD/],
+    [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'a very long secret', ADMIN_DISPLAY_NAME: 'x'.repeat(61) }, /ADMIN_DISPLAY_NAME/],
+    [{ ADMIN_EMAIL: 'admin@uni.example', ADMIN_PASSWORD: 'a very long secret', ADMIN_DISPLAY_NAME: 'Bad\u0007Name' }, /ADMIN_DISPLAY_NAME/],
   ])('rejects %o', (env, message) => {
     expect(() => loadConfig(env)).toThrow(ConfigError);
     expect(() => loadConfig(env)).toThrow(message);
