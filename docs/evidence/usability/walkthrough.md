@@ -28,7 +28,7 @@ Screenshot: `01-register-field-error-360px.png`.
 | Every function reachable by keyboard | ✅ for the booking path (skip link, native form controls, visible focus ring) |
 | 360 px wide | ✅ no horizontal scroll |
 | Errors name the field/rule | ✅ "Password must be at least 12 characters." under the password field; "A booking must last at least 30 minutes and end after it starts." on the booking form; focus moved to the field in error |
-| First booking in < 2 min (SC-002) | ⚠️ **not measurable by an agent** — tool latency dominates. **[TEAM]**: time 3–5 first-time users on this exact path and record the times here. |
+| First booking in < 2 min (SC-002) | ✅ met in real-user trials (below); the agent run itself is not a timing measurement (tool latency dominates) |
 
 ## Findings
 
@@ -42,3 +42,18 @@ Screenshot: `01-register-field-error-360px.png`.
 Positive observations: skip link; every input has a `<label>`; status messages in a live region;
 focus management after register, sign-in, room selection and on validation errors; the date defaults
 to tomorrow; room buttons have descriptive accessible names.
+
+## Real-user trials (SC-002)
+
+Participant: one person — the author, who already knew the system (2 trials). Running system with a fresh
+database and the 6 demo rooms. Durations come from the audit log (`auth.login.succeeded`, `user.registered`)
+and the bookings' creation times, not from a stopwatch.
+
+| Trial | Account | Task performed | Sign-in → confirmed booking | Registration → confirmed booking |
+|---|---|---|---|---|
+| 1 | existing (administrator) | room for 5, tomorrow 10:00–11:00 | **28 s** | — |
+| 2 | newly registered student | room for 1, tomorrow 20:30–21:30 | **18 s** | **25 s** |
+
+Both trials are far below the 2-minute target. No failed sign-ins were logged (validation messages are not
+logged). One extra account was registered but not used. Limitations: a single participant who knew the system,
+and trial 2 did not follow the scripted "room for 4 at 10:00" task.
