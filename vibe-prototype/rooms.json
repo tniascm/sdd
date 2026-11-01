@@ -1,0 +1,8 @@
+[
+  { "name": "Quiet Room A", "location": "Main Library, Floor 1", "capacity": 2, "features": "Silent study" },
+  { "name": "Quiet Room B", "location": "Main Library, Floor 1", "capacity": 2, "features": "Silent study" },
+  { "name": "Group Room 1", "location": "Main Library, Floor 2", "capacity": 6, "features": "Whiteboard, TV screen" },
+  { "name": "Group Room 2", "location": "Main Library, Floor 2", "capacity": 6, "features": "Whiteboard" },
+  { "name": "Seminar Pod", "location": "Science Building, Room S104", "capacity": 10, "features": "Projector, whiteboard" },
+  { "name": "Study Booth", "location": "Student Union, Floor 3", "capacity": 4, "features": "Power outlets, TV screen" }
+]
