@@ -12,6 +12,8 @@ export function openDatabase(file: string): DatabaseSync {
   if (!inMemory) mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
   db.exec('PRAGMA foreign_keys = ON');
+  // FR-019 / R-2: deleted content is overwritten with zeros, not left in free space.
+  db.exec('PRAGMA secure_delete = ON');
   db.exec('PRAGMA busy_timeout = 5000');
   if (!inMemory) db.exec('PRAGMA journal_mode = WAL');
   applySchema(db);

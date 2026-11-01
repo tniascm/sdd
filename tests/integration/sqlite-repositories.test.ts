@@ -114,6 +114,21 @@ describe('SessionRepository', () => {
     expect(repos.sessions.findByTokenHash('abc')?.revokedAt).toBe(NOW + 1000);
     expect(repos.sessions.findByTokenHash('nope')).toBeNull();
   });
+
+  it('FR-021 / R-9: deletes sessions that expired or were revoked before a cutoff', () => {
+    const u = user();
+    repos.users.insert(u, 'h');
+    const s = (tokenHash: string, expiresAt: number, revokedAt: number | null) =>
+      repos.sessions.insert({ tokenHash, userId: u.id, createdAt: NOW - 40 * H, expiresAt, revokedAt });
+    s('expired-long-ago', NOW - 30 * H, null);
+    s('revoked-long-ago', NOW + H, NOW - 30 * H);
+    s('expired-recently', NOW - H, null);
+    s('revoked-recently', NOW + H, NOW - H);
+    s('active', NOW + H, null);
+    expect(repos.sessions.deleteEndedBefore(NOW - 24 * H)).toBe(2);
+    for (const gone of ['expired-long-ago', 'revoked-long-ago']) expect(repos.sessions.findByTokenHash(gone)).toBeNull();
+    for (const kept of ['expired-recently', 'revoked-recently', 'active']) expect(repos.sessions.findByTokenHash(kept)).not.toBeNull();
+  });
 });
 
 describe('LoginFailureRepository', () => {
@@ -129,6 +144,14 @@ describe('LoginFailureRepository', () => {
     f.clear('e1');
     expect(f.countSince('e1', 0)).toBe(0);
     expect(f.countSince('e2', 0)).toBe(1);
+  });
+
+  it('FR-021 / R-9: deletes failures recorded before a cutoff', () => {
+    const f = repos.loginFailures;
+    f.record('e1', NOW - 25 * H);
+    f.record('e1', NOW - 23 * H);
+    expect(f.deleteBefore(NOW - 24 * H)).toBe(1);
+    expect(f.countSince('e1', 0)).toBe(1);
   });
 });
 
@@ -245,16 +268,16 @@ describe('BookingRepository', () => {
     expect(repos.bookings.findById(otherRoom.id)?.status).toBe('confirmed');
   });
 
-  it('FR-019: cancels a user’s upcoming bookings and clears all their purposes', () => {
-    const past = booking(r.id, u.id, NOW - 3 * H, NOW - 2 * H, { purpose: 'old' });
+  it('FR-019: cancels a user’s upcoming bookings and erases purposes and cancel reasons (R-10)', () => {
+    const past = booking(r.id, u.id, NOW - 3 * H, NOW - 2 * H, { purpose: 'old', status: 'cancelled', cancelledAt: NOW, cancelledBy: 'admin', cancelReason: 'Names Alice' });
     const running = booking(r.id, u.id, NOW - H, NOW + H, { purpose: 'now' });
     const future = booking(r2.id, u.id, NOW + 2 * H, NOW + 3 * H, { purpose: 'next' });
     const other = booking(r2.id, v.id, NOW + 4 * H, NOW + 5 * H, { purpose: 'keep' });
     for (const b of [past, running, future, other]) repos.bookings.insert(b);
     expect(repos.bookings.cancelUpcomingForUser(u.id, NOW, { at: NOW, by: 'system', reason: 'Account deleted' })).toBe(2);
-    repos.bookings.clearPurposeForUser(u.id);
-    expect(repos.bookings.findById(past.id)).toMatchObject({ status: 'confirmed', purpose: null });
-    expect(repos.bookings.findById(running.id)).toMatchObject({ status: 'cancelled', purpose: null, cancelReason: 'Account deleted' });
+    repos.bookings.erasePersonalTextForUser(u.id);
+    expect(repos.bookings.findById(past.id)).toMatchObject({ status: 'cancelled', purpose: null, cancelReason: null });
+    expect(repos.bookings.findById(running.id)).toMatchObject({ status: 'cancelled', purpose: null, cancelReason: null });
     expect(repos.bookings.findById(future.id)).toMatchObject({ status: 'cancelled', purpose: null });
     expect(repos.bookings.findById(other.id)).toMatchObject({ status: 'confirmed', purpose: 'keep' });
   });

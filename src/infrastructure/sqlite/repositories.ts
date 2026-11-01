@@ -143,6 +143,7 @@ export class SqliteSessionRepository implements SessionRepository {
       ),
       byHash: db.prepare('SELECT token_hash, user_id, created_at, expires_at, revoked_at FROM sessions WHERE token_hash = ?'),
       revoke: db.prepare('UPDATE sessions SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL'),
+      deleteEnded: db.prepare('DELETE FROM sessions WHERE expires_at < ? OR (revoked_at IS NOT NULL AND revoked_at < ?)'),
     };
   }
 
@@ -158,6 +159,10 @@ export class SqliteSessionRepository implements SessionRepository {
   revoke(tokenHash: string, at: number): void {
     this.stmts.revoke.run(at, tokenHash);
   }
+
+  deleteEndedBefore(cutoff: number): number {
+    return changes(this.stmts.deleteEnded.run(cutoff, cutoff));
+  }
 }
 
 // ---------------------------------------------------------------- login failures
@@ -171,6 +176,7 @@ export class SqliteLoginFailureRepository implements LoginFailureRepository {
       countSince: db.prepare('SELECT COUNT(*) AS n FROM login_failures WHERE email_hash = ? AND at > ?'),
       lastAt: db.prepare('SELECT MAX(at) AS at FROM login_failures WHERE email_hash = ?'),
       clear: db.prepare('DELETE FROM login_failures WHERE email_hash = ?'),
+      deleteBefore: db.prepare('DELETE FROM login_failures WHERE at < ?'),
     };
   }
 
@@ -188,6 +194,10 @@ export class SqliteLoginFailureRepository implements LoginFailureRepository {
 
   clear(emailHash: string): void {
     this.stmts.clear.run(emailHash);
+  }
+
+  deleteBefore(cutoff: number): number {
+    return changes(this.stmts.deleteBefore.run(cutoff));
   }
 }
 
@@ -336,7 +346,7 @@ export class SqliteBookingRepository implements BookingRepository {
       cancelUpcomingForUser: db.prepare(
         `UPDATE bookings ${cancelSet} WHERE user_id = ? AND status = 'confirmed' AND end_at > ?`,
       ),
-      clearPurpose: db.prepare('UPDATE bookings SET purpose = NULL WHERE user_id = ?'),
+      erasePersonalText: db.prepare('UPDATE bookings SET purpose = NULL, cancel_reason = NULL WHERE user_id = ?'),
       deleteEndedBefore: db.prepare('DELETE FROM bookings WHERE end_at < ?'),
     };
   }
@@ -391,8 +401,8 @@ export class SqliteBookingRepository implements BookingRepository {
     return changes(this.stmts.cancelUpcomingForUser.run(c.at, c.by, c.reason, userId, now));
   }
 
-  clearPurposeForUser(userId: string): void {
-    this.stmts.clearPurpose.run(userId);
+  erasePersonalTextForUser(userId: string): void {
+    this.stmts.erasePersonalText.run(userId);
   }
 
   deleteEndedBefore(cutoff: number): number {

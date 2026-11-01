@@ -32,6 +32,14 @@ export interface TokenService {
   hash(token: string): string;
 }
 
+/**
+ * Makes deleted data unrecoverable from the storage files (FR-019, R-2): with SQLite in WAL
+ * mode, a TRUNCATE checkpoint so no old page version survives in the write-ahead log.
+ */
+export interface StorageFlusher {
+  flush(): void;
+}
+
 /** Runs `fn` atomically. `fn` must be synchronous — no `await` inside a transaction. */
 export interface UnitOfWork {
   transaction<T>(fn: () => T): T;
@@ -56,6 +64,8 @@ export interface SessionRepository {
   insert(session: Session): void;
   findByTokenHash(tokenHash: string): Session | null;
   revoke(tokenHash: string, at: number): void;
+  /** Deletes sessions that expired, or were revoked, before `cutoff` (FR-021, R-9); returns how many. */
+  deleteEndedBefore(cutoff: number): number;
 }
 
 /** Failed sign-ins keyed by SHA-256 of the normalised email (FR-004, research R8). */
@@ -65,6 +75,8 @@ export interface LoginFailureRepository {
   countSince(emailHash: string, since: number): number;
   lastAt(emailHash: string): number | null;
   clear(emailHash: string): void;
+  /** Deletes failures recorded before `cutoff` (FR-021, R-9); returns how many. */
+  deleteBefore(cutoff: number): number;
 }
 
 export interface RoomRepository {
@@ -107,8 +119,8 @@ export interface BookingRepository {
   cancelFutureForRoom(roomId: string, now: number, cancellation: Cancellation): number;
   /** Cancels a user's confirmed bookings with end > now (FR-019); returns how many. */
   cancelUpcomingForUser(userId: string, now: number, cancellation: Cancellation): number;
-  /** Sets purpose = null on all of a user's bookings (FR-019). */
-  clearPurposeForUser(userId: string): void;
+  /** Sets purpose and cancel reason to null on all of a user's bookings (FR-019, R-10). */
+  erasePersonalTextForUser(userId: string): void;
   /** Deletes bookings with end < cutoff (FR-021); returns how many. */
   deleteEndedBefore(cutoff: number): number;
 }

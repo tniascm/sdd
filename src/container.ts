@@ -9,12 +9,14 @@ import { AuditService } from './application/audit-service.ts';
 import { AuthService } from './application/auth-service.ts';
 import { BookingService } from './application/booking-service.ts';
 import { MaintenanceService } from './application/maintenance.ts';
+import { PasswordAttempts } from './application/password-attempts.ts';
 import type { Clock, PasswordHasher, Repositories, TokenService, UnitOfWork } from './application/ports.ts';
 import { RoomService } from './application/room-service.ts';
 import type { Config } from './config.ts';
 import { ScryptHasher, type ScryptParams } from './infrastructure/scrypt-hasher.ts';
 import { openDatabase } from './infrastructure/sqlite/database.ts';
 import { createSqliteRepositories } from './infrastructure/sqlite/repositories.ts';
+import { SqliteStorageFlusher } from './infrastructure/sqlite/storage-flusher.ts';
 import { SqliteUnitOfWork } from './infrastructure/sqlite/unit-of-work.ts';
 import { CryptoTokenService } from './infrastructure/token-service.ts';
 
@@ -36,6 +38,8 @@ export type Container = {
   hasher: PasswordHasher;
   tokens: TokenService;
   audit: AuditService;
+  /** FR-004 lock check and failure counting shared by sign-in and account deletion. */
+  attempts: PasswordAttempts;
   auth: AuthService;
   rooms: RoomService;
   bookings: BookingService;
@@ -54,10 +58,11 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   const hasher = new ScryptHasher(opts.hasherParams);
   const tokens = new CryptoTokenService();
   const audit = new AuditService(repos.auditEvents, clock);
+  const attempts = new PasswordAttempts({ loginFailures: repos.loginFailures, tokens, clock, uow, audit });
   const auth = new AuthService({
     users: repos.users,
     sessions: repos.sessions,
-    loginFailures: repos.loginFailures,
+    attempts,
     tokens,
     hasher,
     clock,
@@ -70,12 +75,12 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   const accounts = new AccountService({
     users: repos.users,
     bookings: repos.bookings,
-    loginFailures: repos.loginFailures,
+    attempts,
     hasher,
-    tokens,
     clock,
     uow,
     audit,
+    storage: new SqliteStorageFlusher(db),
   });
   const maintenance = new MaintenanceService({ bookings: repos.bookings, auditEvents: repos.auditEvents, audit, uow, clock });
 
@@ -98,5 +103,5 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     if (db.isOpen) db.close();
   }
 
-  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, accounts, maintenance, bootstrapAdmin, close };
+  return { config, clock, db, repos, uow, hasher, tokens, audit, attempts, auth, rooms, bookings, accounts, maintenance, bootstrapAdmin, close };
 }

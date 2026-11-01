@@ -3,23 +3,17 @@
  */
 import { randomBytes, randomUUID } from 'node:crypto';
 import { DomainError } from '../domain/errors.ts';
-import { LOCKOUT, lockedUntil } from '../domain/lockout.ts';
 import type { Actor, User } from '../domain/types.ts';
 import type { AuditService } from './audit-service.ts';
-import type {
-  Clock,
-  LoginFailureRepository,
-  PasswordHasher,
-  SessionRepository,
-  TokenService,
-  UnitOfWork,
-  UserRepository,
-} from './ports.ts';
+import { normaliseEmail, type PasswordAttempts } from './password-attempts.ts';
+import type { Clock, PasswordHasher, SessionRepository, TokenService, UnitOfWork, UserRepository } from './ports.ts';
+
+export { normaliseEmail };
 
 export type AuthServiceDeps = {
   users: UserRepository;
   sessions: SessionRepository;
-  loginFailures: LoginFailureRepository;
+  attempts: PasswordAttempts;
   tokens: TokenService;
   hasher: PasswordHasher;
   clock: Clock;
@@ -34,10 +28,6 @@ export type SignedInSession = { token: string; expiresAt: number; user: User };
 /** FR-004: unknown email and wrong password get exactly this error. */
 const invalidCredentials = () => new DomainError('INVALID_CREDENTIALS', 'Invalid email or password.');
 
-export function normaliseEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
 export class AuthService {
   private readonly deps: AuthServiceDeps;
   /** Hash verified for unknown emails so both failure paths cost the same time (FR-004). */
@@ -45,11 +35,6 @@ export class AuthService {
 
   constructor(deps: AuthServiceDeps) {
     this.deps = deps;
-  }
-
-  /** SHA-256 of the normalised email: the key for login failures (research R8). */
-  emailHash(email: string): string {
-    return this.deps.tokens.hash(normaliseEmail(email));
   }
 
   /** FR-001. New accounts are students; the email is stored lower-cased. */
@@ -76,36 +61,21 @@ export class AuthService {
     return user;
   }
 
-  /** FR-002, FR-004. */
+  /**
+   * FR-002, FR-004. The attempt counts as a failure before the password is checked (R-1);
+   * failed sign-ins are audited with the account id only, never an email-derived value (R-3).
+   */
   async login(emailInput: string, password: string): Promise<SignedInSession> {
-    const { users, sessions, loginFailures, tokens, hasher, clock, uow, audit, config } = this.deps;
+    const { users, sessions, attempts, tokens, hasher, clock, uow, audit, config } = this.deps;
     const email = normaliseEmail(emailInput);
-    const emailHash = tokens.hash(email);
     const credentials = users.findCredentialsByEmail(email);
     const target = credentials ? { type: 'user', id: credentials.user.id } : null;
 
-    // Refused because of the lock: not checked, not recorded as a failure, audit-logged (data-model.md).
-    const now = clock.now();
-    const last = loginFailures.lastAt(emailHash);
-    const failures = last === null ? 0 : loginFailures.countSince(emailHash, last - LOCKOUT.windowMs);
-    const until = lockedUntil(last, failures, now);
-    if (until !== null) {
-      audit.record('auth.locked', null, target, { emailHash });
-      const retryAfterSeconds = Math.max(1, Math.ceil((until - now) / 1000));
-      throw new DomainError(
-        'TOO_MANY_ATTEMPTS',
-        `Too many failed sign-in attempts. Try again in ${Math.ceil(retryAfterSeconds / 60)} minute(s).`,
-        undefined,
-        { retryAfterSeconds },
-      );
-    }
+    attempts.begin(email, target); // throws TOO_MANY_ATTEMPTS while locked
 
     const ok = await hasher.verify(password, credentials?.passwordHash ?? (await this.dummy()));
     if (!credentials || !ok) {
-      uow.transaction(() => {
-        loginFailures.record(emailHash, clock.now());
-        audit.record('auth.login.failed', null, target, { emailHash });
-      });
+      audit.record('auth.login.failed', null, target);
       throw invalidCredentials();
     }
 
@@ -114,7 +84,7 @@ export class AuthService {
     const expiresAt = createdAt + config.sessionTtlMs;
     const user = credentials.user;
     uow.transaction(() => {
-      loginFailures.clear(emailHash);
+      attempts.clear(email);
       sessions.insert({ tokenHash: tokens.hash(token), userId: user.id, createdAt, expiresAt, revokedAt: null });
       audit.record('auth.login.succeeded', user.id, { type: 'user', id: user.id });
     });
