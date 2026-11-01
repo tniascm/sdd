@@ -38,7 +38,7 @@ bookings" and as busy in the room's availability.
 
 **Acceptance Scenarios**:
 
-1. **Given** a signed-in student and an active room with capacity 6, **When** they book it for
+1. **Given** a signed-in student and a room in service with capacity 6, **When** they book it for
    tomorrow 10:00–11:00 for 4 people, **Then** the booking is confirmed and shown in their
    upcoming bookings.
 2. **Given** an existing booking of room A for 10:00–11:00, **When** another user books room A
@@ -129,7 +129,7 @@ it out of service, and confirm it can no longer be booked.
    capacity (1–50) and equipment, **Then** the room appears in the room list.
 2. **Given** a non-administrator, **When** they try any administrative operation, **Then** the
    request is refused as forbidden.
-3. **Given** an active room with future bookings, **When** an administrator takes it out of
+3. **Given** a room in service with future bookings, **When** an administrator takes it out of
    service, **Then** it can no longer be booked and its future bookings are cancelled with the
    reason "Room taken out of service", visible to their owners.
 4. **Given** an administrator, **When** they view the bookings for a date, **Then** they see all
@@ -201,7 +201,7 @@ reference the person.
 
 **Rooms**
 
-- **FR-005**: Signed-in users MUST be able to list active rooms with name, building, capacity and
+- **FR-005**: Signed-in users MUST be able to list rooms that are in service with name, building, capacity and
   equipment, filtered optionally by minimum capacity, building and required equipment.
 - **FR-006**: Signed-in users MUST be able to view a room's availability for a campus-local date:
   booked intervals (without booker identity) and free intervals within opening hours.
@@ -212,7 +212,7 @@ reference the person.
 
 **Bookings**
 
-- **FR-009**: Signed-in users MUST be able to book an active room for a time slot with a party
+- **FR-009**: Signed-in users MUST be able to book a room that is in service for a time slot with a party
   size and an optional purpose text (≤ 100 characters).
 - **FR-010**: A booking MUST start and end on a 30-minute boundary, last at least 30 minutes,
   start in the future, lie within opening hours (08:00–22:00 campus time) on a single campus-local

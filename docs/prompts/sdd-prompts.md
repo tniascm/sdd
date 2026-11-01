@@ -69,3 +69,63 @@ failed sign-ins must be throttled, and security-relevant events must be audit-lo
   4. Retention → anonymous bookings and audit events deleted after 12 months (new FR-021).
   5. General request limit → 300 requests/minute/client address (new NFR-010; OWASP API4).
 - Outcome: 0 markers left; spec quality checklist 15/16 → 16/16.
+
+## SDD-P4 — `/speckit-plan`
+
+```text
+/speckit-plan Use TypeScript on Node.js 24+ with as few dependencies as possible: Express for HTTP,
+the built-in SQLite module for storage, built-in crypto for password hashing and session tokens, zod
+for request validation, and a plain HTML/CSS/JS front end with no build step served by the same
+process. Keep business rules in a pure domain layer behind ports (ports & adapters) with an
+injectable clock. Test with Vitest and supertest; describe the API in OpenAPI 3.1 and test the
+implementation against it.
+```
+
+- Purpose: the **how** — technology choices and architecture, kept out of the spec on purpose.
+- Output: `plan.md` (technical context, constitution gate table, source layout, error mapping),
+  `research.md` (11 decisions with rationale and rejected alternatives), `data-model.md`
+  (5 entities, invariants, state transitions), `contracts/openapi.yaml` (21 operations — first written as "22" in plan.md; corrected by `/speckit-analyze`),
+  `quickstart.md` (9 validation scenarios).
+- What did not go to plan, and how it was handled:
+  1. **Dependency compatibility.** "Use the latest TypeScript" would have installed 7.0.2, but
+     `typescript-eslint@8.72.1` requires `typescript < 6.1`. Found by running `npm view … peerDependencies`
+     during research rather than trusting memory; TypeScript pinned to 6.0.3 (research R1).
+  2. **Runtime API assumption.** scrypt with N = 2^15, r = 8 fails with Node's default `maxmem`
+     (`ERR_CRYPTO_INVALID_SCRYPT_PARAMS`). Verified with a probe; `maxmem` set to 64 MiB (R4).
+  3. **Contract defect.** The first OpenAPI draft composed `AdminBooking` with `allOf: [Booking]`
+     while `Booking` had `additionalProperties: false` — every admin response would have failed
+     validation. Fixed with a `BookingBase` + `unevaluatedProperties: false` (JSON Schema 2020-12).
+- Assessment: the research step paid off — two of the three defects were "plausible but wrong"
+  facts of the kind an AI states confidently; probing the real environment caught them.
+
+## SDD-P5 — `/speckit-tasks`
+
+```text
+/speckit-tasks Tests are required (constitution Principle II). Separate two roles: a Verifier who
+writes acceptance/contract tests and test support from the spec, and an Implementer who writes
+production code and may not edit the Verifier's tests. Quote data-model constraints verbatim in
+task descriptions. Implement US2 (auth) before US1 because booking needs a signed-in user.
+```
+
+- Purpose: turn the plan into small, ordered, file-specific tasks an AI agent can execute one by one.
+- Reasoning for the Verifier/Implementer split: if the same AI writes code *and* adjusts the tests
+  until they pass, the tests stop being an independent check. The split makes "weakening a test"
+  a visible process violation rather than a silent fix.
+- Output: `tasks.md` — 53 tasks in 8 phases (setup, foundational, US2, US1, US3, US4, US5, polish).
+
+## SDD-P6 — `/speckit-analyze`
+
+```text
+/speckit-analyze
+```
+
+- Purpose: read-only cross-artifact consistency check before any code exists.
+- Result (`docs/evidence/speckit-analyze-report.md`): 7 findings — **1 CRITICAL** (constitution
+  quality gate 5 "independent review" had no task), **1 HIGH** (usability NFR-007 / SC-002 never
+  verified), 1 MEDIUM (terminology drift "active room" vs "in service"), 4 LOW (operation count
+  22 → 21 in plan.md; 10 requirement IDs only implicitly covered; lockout scope note; vague
+  "developer laptop").
+- Remediation applied: tasks T054 (independent review → audit log) and T055 (usability walkthrough)
+  added; spec wording normalised; plan corrected; IDs cited in tasks → 55 tasks, 37/37 requirements mapped.
+- Assessment: this step found defects in artifacts written minutes earlier by the same AI — evidence
+  that an AI-written plan still needs an explicit consistency pass before implementation.

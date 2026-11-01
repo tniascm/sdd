@@ -36,7 +36,7 @@ automated test written before the code.
 
 **Constraints**: exactly one winner for concurrent same-slot bookings (NFR-006); 300 req/min/client (NFR-010); JSON bodies ≤ 10 kB; no inline scripts (CSP)
 
-**Scale/Scope**: one campus, ≤ a few thousand users, ≤ 50 rooms; 20 FRs + FR-021, 10 NFRs, 22 HTTP operations
+**Scale/Scope**: one campus, ≤ a few thousand users, ≤ 50 rooms; 20 FRs + FR-021, 10 NFRs, 21 HTTP operations
 
 ## Constitution Check
 
