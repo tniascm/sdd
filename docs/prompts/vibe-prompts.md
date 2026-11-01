@@ -8,7 +8,7 @@ stayed inside its folder; it carries no product requirements.
 | ID | Time (EET) | Purpose |
 |----|------------|---------|
 | V1 | 2026-11-01 17:41 | Single-line prompt, as in the "Vibe Coding Lifecycle" (prompt → solution based on assumptions) |
-| V2 | 2026-11-01 18:12 | Review-and-feedback prompt after trying V1 (feature gaps found by use) |
+| V2 | 2026-11-01 17:51 | Review-and-feedback prompt after trying V1 (feature gaps found by use) |
 
 ## V1 — initial prompt
 
