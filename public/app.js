@@ -164,6 +164,14 @@ function signedOut(message) {
   $('#session-bar').hidden = true;
   $('#session-user').textContent = '';
   for (const node of document.querySelectorAll('[data-admin-only]')) node.hidden = true;
+  // Leave nothing of the previous user on screen (shared computers).
+  for (const form of document.querySelectorAll('#app-view form')) {
+    form.reset();
+    clearErrors(form);
+  }
+  for (const list of document.querySelectorAll('#app-view ul, #app-view tbody')) list.replaceChildren();
+  $('#book-section').hidden = true;
+  state.room = null;
   setStatus(message || '');
 }
 
@@ -689,7 +697,7 @@ signedInHandlers.push((user) => {
 
 function formatDateTime(isoString) {
   return new Date(isoString).toLocaleString(undefined, {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: state.timeZone, weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 }
 

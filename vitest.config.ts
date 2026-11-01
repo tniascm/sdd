@@ -10,6 +10,8 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/server.ts', 'src/cli/**'],
       thresholds: { lines: 85 },
+      // print the report even when some tests fail, so the coverage gate stays visible
+      reportOnFailure: true,
     },
   },
 });
