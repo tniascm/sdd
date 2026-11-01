@@ -13,7 +13,7 @@ This repository contains two builds of the same idea so they can be compared:
 
 | What | Where |
 |---|---|
-| Experience report | [`docs/report/REPORT.pdf`](docs/report/REPORT.pdf) |
+| Experience report | submitted separately; not stored in this repository |
 | Prompt logs (verbatim, with outcomes) | [`docs/prompts/vibe-prompts.md`](docs/prompts/vibe-prompts.md), [`docs/prompts/sdd-prompts.md`](docs/prompts/sdd-prompts.md) |
 | Audit log (all defects found and how they were fixed) | [`docs/evidence/audit-log.md`](docs/evidence/audit-log.md) |
 | Independent review, vibe audit, usability walkthrough | `docs/evidence/review-findings.md`, `docs/evidence/vibe-audit.md`, `docs/evidence/usability/` |
