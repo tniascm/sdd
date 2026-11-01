@@ -8,9 +8,13 @@ const container = buildContainer({ dbFile: config.dbFile, clock: systemClock, co
 try {
   const result = container.maintenance.purge();
   const cutoff = new Date(result.cutoff).toISOString();
-  console.log(`Retention cutoff: ${cutoff} (12 months ago)`);
-  console.log(`Deleted bookings that ended before the cutoff: ${result.deletedBookings}`);
-  console.log(`Deleted audit events recorded before the cutoff: ${result.deletedAuditEvents}`);
+  const shortCutoff = new Date(result.shortCutoff).toISOString();
+  console.log(`Retention cutoff for bookings and audit events: ${cutoff} (12 months ago)`);
+  console.log(`Deleted bookings that ended before it: ${result.deletedBookings}`);
+  console.log(`Deleted audit events recorded before it: ${result.deletedAuditEvents}`);
+  console.log(`Retention cutoff for sign-in failures and sessions: ${shortCutoff} (24 hours ago)`);
+  console.log(`Deleted sign-in failure records: ${result.deletedLoginFailures}`);
+  console.log(`Deleted expired or revoked sessions: ${result.deletedSessions}`);
 } finally {
   container.close();
 }

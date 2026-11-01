@@ -1,9 +1,17 @@
 // T050 — FR-021: delete bookings that ended more than 12 months ago and audit events older than
-// 12 months; record maintenance.purged. Test doubles only (no database).
+// 12 months, plus (R-9) login failures older than 24 h and sessions that ended more than 24 h ago;
+// record maintenance.purged. Test doubles only (no database).
 import { describe, expect, it } from 'vitest';
 import { AuditService } from '../../src/application/audit-service.ts';
-import { MaintenanceService, RETENTION_MS } from '../../src/application/maintenance.ts';
-import type { AuditEventRepository, BookingRepository, NewAuditEvent, UnitOfWork } from '../../src/application/ports.ts';
+import { MaintenanceService, RETENTION_MS, SHORT_RETENTION_MS } from '../../src/application/maintenance.ts';
+import type {
+  AuditEventRepository,
+  BookingRepository,
+  LoginFailureRepository,
+  NewAuditEvent,
+  SessionRepository,
+  UnitOfWork,
+} from '../../src/application/ports.ts';
 import type { AuditEvent } from '../../src/domain/types.ts';
 
 const NOW = Date.parse('2026-11-02T06:00:00.000Z');
@@ -31,6 +39,18 @@ function setup() {
       return 3;
     },
   } as unknown as BookingRepository;
+  const loginFailures = {
+    deleteBefore(cutoff: number) {
+      calls.push(`deleteFailures ${cutoff}`);
+      return 2;
+    },
+  } as unknown as LoginFailureRepository;
+  const sessions = {
+    deleteEndedBefore(cutoff: number) {
+      calls.push(`deleteSessions ${cutoff}`);
+      return 4;
+    },
+  } as unknown as SessionRepository;
   const uow: UnitOfWork = {
     transaction<T>(fn: () => T): T {
       calls.push('begin');
@@ -40,21 +60,32 @@ function setup() {
     },
   };
   const clock = { now: () => NOW };
-  const service = new MaintenanceService({ bookings, auditEvents, audit: new AuditService(auditEvents, clock), uow, clock });
+  const service = new MaintenanceService({
+    bookings, auditEvents, loginFailures, sessions, audit: new AuditService(auditEvents, clock), uow, clock,
+  });
   return { service, calls, events };
 }
 
 describe('MaintenanceService.purge', () => {
-  it('keeps 12 months (365 days)', () => {
+  it('keeps bookings and audit events 12 months (365 days), failures and ended sessions 24 h', () => {
     expect(RETENTION_MS).toBe(365 * DAY);
+    expect(SHORT_RETENTION_MS).toBe(DAY);
   });
 
-  it('deletes old bookings and audit events with a cutoff of now − 12 months, in one transaction', () => {
+  it('deletes everything past its retention, in one transaction', () => {
     const { service, calls } = setup();
     const result = service.purge();
     const cutoff = NOW - 365 * DAY;
-    expect(result).toEqual({ cutoff, deletedBookings: 3, deletedAuditEvents: 7 });
-    expect(calls).toEqual(['begin', `deleteBookings ${cutoff}`, `deleteEvents ${cutoff}`, 'insert maintenance.purged', 'commit']);
+    const shortCutoff = NOW - DAY;
+    expect(result).toEqual({
+      cutoff, deletedBookings: 3, deletedAuditEvents: 7,
+      shortCutoff, deletedLoginFailures: 2, deletedSessions: 4,
+    });
+    expect(calls).toEqual([
+      'begin', `deleteBookings ${cutoff}`, `deleteEvents ${cutoff}`,
+      `deleteFailures ${shortCutoff}`, `deleteSessions ${shortCutoff}`,
+      'insert maintenance.purged', 'commit',
+    ]);
   });
 
   it('records maintenance.purged with the counts after deleting, so the record itself is kept', () => {
@@ -63,7 +94,10 @@ describe('MaintenanceService.purge', () => {
     expect(events).toEqual([
       {
         id: 1, at: NOW, actorUserId: null, action: 'maintenance.purged', targetType: null, targetId: null,
-        details: { deletedBookings: 3, deletedAuditEvents: 7, cutoff: '2025-11-02T06:00:00.000Z' },
+        details: {
+          deletedBookings: 3, deletedAuditEvents: 7, cutoff: '2025-11-02T06:00:00.000Z',
+          deletedLoginFailures: 2, deletedSessions: 4, shortCutoff: '2026-11-01T06:00:00.000Z',
+        },
       },
     ]);
   });

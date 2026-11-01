@@ -82,7 +82,15 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     audit,
     storage: new SqliteStorageFlusher(db),
   });
-  const maintenance = new MaintenanceService({ bookings: repos.bookings, auditEvents: repos.auditEvents, audit, uow, clock });
+  const maintenance = new MaintenanceService({
+    bookings: repos.bookings,
+    auditEvents: repos.auditEvents,
+    loginFailures: repos.loginFailures,
+    sessions: repos.sessions,
+    audit,
+    uow,
+    clock,
+  });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;
