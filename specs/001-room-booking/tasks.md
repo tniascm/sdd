@@ -159,8 +159,8 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 - [ ] T048 [P] (Verifier) `tests/contract/openapi-coverage.test.ts`: every operation in `openapi.yaml` is exercised at least once and every response validates
 - [ ] T049 [P] (Verifier) `tests/acceptance/security.test.ts`: NFR-004/005/010 — security headers and CSP, unknown fields, malformed JSON without stack trace, body > 10 kB, 301st request in a minute → 429 + `Retry-After`, admin endpoints → 403 for students
-- [ ] T050 (Implementer, test first) `tests/unit/maintenance.test.ts` then `src/application/maintenance.ts` + `src/cli/purge.ts` (FR-021: delete bookings that ended > 12 months ago and audit events older than 12 months; audit `maintenance.purged`)
-- [ ] T051 [P] (Implementer) `scripts/seed.ts` (admin from env + 6 demo rooms) and `scripts/perf.ts` (NFR-001, SC-004: 50 rooms, 5,000 bookings, 20 concurrent workers, prints p95 per endpoint)
+- [X] T050 (Implementer, test first) `tests/unit/maintenance.test.ts` then `src/application/maintenance.ts` + `src/cli/purge.ts` (FR-021: delete bookings that ended > 12 months ago and audit events older than 12 months; audit `maintenance.purged`)
+- [X] T051 [P] (Implementer) `scripts/seed.ts` (admin from env + 6 demo rooms) and `scripts/perf.ts` (NFR-001, SC-004: 50 rooms, 5,000 bookings, 20 concurrent workers, prints p95 per endpoint)
 - [ ] T052 (Implementer) `README.md`: run, test, configuration, architecture overview
 - [ ] T053 (Verifier) Run quality gates (SC-001: all acceptance tests green) and store outputs in `docs/evidence/`: `typecheck`, `lint`, `test:coverage` (≥ 85 % lines), `npm audit --omit=dev`, `perf`
 

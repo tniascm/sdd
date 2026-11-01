@@ -8,6 +8,7 @@ import { AccountService } from './application/account-service.ts';
 import { AuditService } from './application/audit-service.ts';
 import { AuthService } from './application/auth-service.ts';
 import { BookingService } from './application/booking-service.ts';
+import { MaintenanceService } from './application/maintenance.ts';
 import type { Clock, PasswordHasher, Repositories, TokenService, UnitOfWork } from './application/ports.ts';
 import { RoomService } from './application/room-service.ts';
 import type { Config } from './config.ts';
@@ -39,6 +40,7 @@ export type Container = {
   rooms: RoomService;
   bookings: BookingService;
   accounts: AccountService;
+  maintenance: MaintenanceService;
   /** Creates the administrator from `config.admin` unless an account with that email exists. */
   bootstrapAdmin(): Promise<void>;
   close(): void;
@@ -75,6 +77,7 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     uow,
     audit,
   });
+  const maintenance = new MaintenanceService({ bookings: repos.bookings, auditEvents: repos.auditEvents, audit, uow, clock });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;
@@ -95,5 +98,5 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     if (db.isOpen) db.close();
   }
 
-  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, accounts, bootstrapAdmin, close };
+  return { config, clock, db, repos, uow, hasher, tokens, audit, auth, rooms, bookings, accounts, maintenance, bootstrapAdmin, close };
 }
