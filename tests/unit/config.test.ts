@@ -1,9 +1,9 @@
-// T014 — configuration from environment variables with the quickstart.md defaults.
+// T014 — configuration from environment variables with the documented defaults (README "Configuration").
 import { describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig } from '../../src/config.ts';
 
 describe('loadConfig', () => {
-  it('uses the quickstart.md defaults', () => {
+  it('uses the documented defaults', () => {
     expect(loadConfig({})).toEqual({
       port: 3000,
       dbFile: 'data/roombook.db',

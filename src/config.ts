@@ -1,5 +1,5 @@
 /**
- * Runtime configuration from environment variables (quickstart.md "Configuration").
+ * Runtime configuration from environment variables (see README.md, "Configuration").
  * Invalid values fail fast at start-up with a message naming the variable.
  */
 import { parseLocalTime } from './domain/campus-time.ts';

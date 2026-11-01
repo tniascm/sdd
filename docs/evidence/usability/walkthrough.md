@@ -19,7 +19,7 @@ on the focused element (a human types it in one go).
 | Choose 10:00–11:00 for 4 | 5×Tab (3 date segments), "1" (→10:00), Tab, "11" (→11:00), Tab, "4", Enter | "Booked Aurora: … 10:00–11:00." and listed under My bookings |
 
 ≈ **40 keyboard actions**; the page never scrolled horizontally (`scrollWidth` = 360 at every step).
-Screenshots: `01-register-field-error-360px.png`, `02-booked-360px-fullpage.png`.
+Screenshot: `01-register-field-error-360px.png`.
 
 ## NFR-007 checks
 
@@ -35,7 +35,7 @@ Screenshots: `01-register-field-error-360px.png`, `02-booked-360px-fullpage.png`
 | ID | Severity | Finding | Evidence |
 |---|---|---|---|
 | U-1 | Medium (usability) | Changing **Start** does not update **End**: after choosing Start 10:00 the End list still showed 09:00 and offered times before the start. The server rejects it with a clear message, but every first-time user who changes the start time hits an error. | `public/app.js` `renderAvailability` sets End only when availability is rendered; no `change` listener on `#booking-start` |
-| U-2 | Low | Dates are formatted in the *browser's* locale ((non-English month name)) inside an English UI. | status line and My bookings |
+| U-2 | Low | Dates are formatted in the *browser's* locale (a non-English month name) inside an English UI. | status line and My bookings |
 | U-3 | Low | `GET /favicon.ico` → 404, logged as a console error on every page load. | browser console |
 | U-4 | Info | Chromium hint: the account-deletion password form has no (hidden) username field, so password managers and assistive tech cannot tell which account it is for. | browser console (verbose) |
 

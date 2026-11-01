@@ -44,7 +44,7 @@ failed sign-ins must be throttled, and security-relevant events must be audit-lo
 - Reasoning: every rule a vibe-coding agent would otherwise guess (overlaps, limits, privacy, lockout)
   is stated up front, so it becomes a testable requirement instead of an AI assumption.
 - Output: `spec.md` with 5 prioritised user stories, 23 acceptance scenarios, 20 FRs, 9 NFRs,
-  6 success criteria, explicit assumptions; plus `checklists/requirements.md`.
+  6 success criteria, explicit assumptions; plus a spec quality checklist (not included in the submission).
 - What did not go to plan: the built-in quality validation (iteration 1) caught a contradiction that
   the agent itself had written — FR-013 listed only *upcoming* bookings while the Assumptions promised
   users could see why an administrator cancelled their booking. Fixed in iteration 2 by widening FR-013.
@@ -85,7 +85,7 @@ implementation against it.
 - Output: `plan.md` (technical context, constitution gate table, source layout, error mapping),
   `research.md` (11 decisions with rationale and rejected alternatives), `data-model.md`
   (5 entities, invariants, state transitions), `contracts/openapi.yaml` (21 operations — first written as "22" in plan.md; corrected by `/speckit-analyze`),
-  `quickstart.md` (9 validation scenarios).
+  a quickstart guide with 9 validation scenarios (not included in the submission; the README covers running and testing).
 - What did not go to plan, and how it was handled:
   1. **Dependency compatibility.** "Use the latest TypeScript" would have installed 7.0.2, but
      `typescript-eslint@8.72.1` requires `typescript < 6.1`. Found by running `npm view … peerDependencies`
@@ -120,7 +120,7 @@ task descriptions. Implement US2 (auth) before US1 because booking needs a signe
 ```
 
 - Purpose: read-only cross-artifact consistency check before any code exists.
-- Result (`docs/evidence/speckit-analyze-report.md`): 7 findings — **1 CRITICAL** (constitution
+- Result: 7 findings — **1 CRITICAL** (constitution
   quality gate 5 "independent review" had no task), **1 HIGH** (usability NFR-007 / SC-002 never
   verified), 1 MEDIUM (terminology drift "active room" vs "in service"), 4 LOW (operation count
   22 → 21 in plan.md; 10 requirement IDs only implicitly covered; lockout scope note; vague

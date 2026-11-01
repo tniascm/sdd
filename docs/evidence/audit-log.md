@@ -51,7 +51,7 @@ reviewer) were played by the orchestrating agent; the <mark>**human sign-off at 
 | R-13 | Info | reviewer | overlap trigger covers INSERT only | **accepted** — no code path re-confirms a booking | Accepted |
 | R-14 | Info | reviewer | ASVS L1 items outside the spec: breached-password check, password change, email verification; per-account lockout allows targeted lock-out | <mark>**accepted risk — needs your decision**</mark> (research R14) | Accepted |
 | U-1 | Medium | Verifier — keyboard-only 360-px walkthrough | End list not updated when Start changes → error on first try | End rebuilt after Start, Start + 1 h preselected | Fixed |
-| U-2 | Low | same | dates in browser locale ((non-English month name)) in an English UI | `en-GB` formatting, campus time | Fixed |
+| U-2 | Low | same | dates in the browser's locale (non-English month names) in an English UI | `en-GB` formatting, campus time | Fixed |
 | U-3 | Low | same | `favicon.ico` 404 on every load | `favicon.svg` + `<link rel=icon>` | Fixed |
 | U-4 | Info | same | deletion password form without username field | hidden read-only username + visible "Account:" line | Fixed |
 

@@ -12,5 +12,4 @@ build/
 *.log
 .env.*
 !.env.example
-docs/report/REPORT.html
 .vitest/
