@@ -43,7 +43,7 @@ failed sign-ins must be throttled, and security-relevant events must be audit-lo
 - Purpose: describe **what** and **why** only (no technology), as Spec Kit requires at this stage.
 - Reasoning: every rule a vibe-coding agent would otherwise guess (overlaps, limits, privacy, lockout)
   is stated up front, so it becomes a testable requirement instead of an AI assumption.
-- Output: `spec.md` with 5 prioritised user stories, 26 acceptance scenarios, 20 FRs, 9 NFRs,
+- Output: `spec.md` with 5 prioritised user stories, 23 acceptance scenarios, 20 FRs, 9 NFRs,
   6 success criteria, explicit assumptions; plus `checklists/requirements.md`.
 - What did not go to plan: the built-in quality validation (iteration 1) caught a contradiction that
   the agent itself had written — FR-013 listed only *upcoming* bookings while the Assumptions promised
