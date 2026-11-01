@@ -57,7 +57,7 @@ Invalid values stop the server at start-up with a message naming the variable. S
 
 | Command | What it does |
 |---|---|
-| `npm run purge` | deletes bookings that ended, and audit events recorded, more than 12 months ago (FR-021) |
+| `npm run purge` | deletes bookings that ended, and audit events recorded, more than 12 months ago; sign-in failure records and expired or revoked sessions after 24 hours (FR-021) |
 | `npm run perf` | load test: 50 rooms, 5,000 bookings, 20 concurrent clients; prints p95 per endpoint (NFR-001) |
 | `npm audit --omit=dev` | supply-chain check of the 3 runtime dependencies |
 
@@ -118,17 +118,27 @@ Key decisions (details in [research.md](specs/001-room-booking/research.md)):
 - **Credentials.** Passwords are stored as scrypt hashes (N = 2^15, r = 8, p = 3). Sessions are
   random 256-bit bearer tokens; only their SHA-256 hash is stored, so sign-out and account
   deletion take effect immediately. After 5 failed sign-ins within 15 minutes, sign-in for
-  that email is refused for 15 minutes, the same way for unknown emails.
+  that email is refused for 15 minutes, the same way for unknown emails. Each attempt is
+  counted *before* its password is checked, so a burst of parallel requests still gets at most
+  5 checks; wrong passwords entered to delete an account count too.
 - **Privacy.** Availability never shows who booked. Account deletion cancels upcoming
-  bookings, clears booking purposes, deletes the user and their sessions, and keeps past
-  bookings only as anonymous room-usage records. Audit events hold pseudonymous ids, never
-  emails, passwords or tokens.
+  bookings, clears booking purposes and cancellation reasons, deletes the user and their
+  sessions, and keeps past bookings only as anonymous room-usage records. SQLite runs with
+  `secure_delete` and the write-ahead log is checkpointed after an erasure, so the deleted
+  email and name do not remain in the database files. Audit events hold pseudonymous ids,
+  never emails, email hashes, passwords or tokens. API responses are sent with
+  `Cache-Control: no-store`.
 - **Browser security.** Content-Security-Policy without inline scripts or styles, no framing,
-  no MIME sniffing; the UI renders all user text with `textContent`.
+  `base-uri 'none'`, `form-action 'self'`, no MIME sniffing; the UI renders all user text with
+  `textContent`.
 
 ## Known limitations
 
 - No email verification or password reset (no mail service in the course environment).
 - The UI keeps the session token in `sessionStorage`; the strict CSP is the mitigation.
 - The rate limiter keeps its counters in memory, per process; RoomBook runs as one process
-  with an embedded database and is not built for horizontal scaling.
+  with an embedded database and is not built for horizontal scaling. Behind a reverse proxy
+  every client shares the proxy's address unless Express `trust proxy` is configured, and
+  rotating IPv6 addresses evade a per-address limit (accepted risks, research R14; the
+  per-account sign-in lock still applies).
+- Erasure cannot reach copies outside the database files, such as backups taken earlier.
