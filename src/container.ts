@@ -54,6 +54,7 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   const { clock, config } = opts;
   const db = openDatabase(opts.dbFile);
   const repos = createSqliteRepositories(db);
+  const storage = new SqliteStorageFlusher(db);
   const uow = new SqliteUnitOfWork(db);
   const hasher = new ScryptHasher(opts.hasherParams);
   const tokens = new CryptoTokenService();
@@ -80,7 +81,7 @@ export function buildContainer(opts: BuildContainerOptions): Container {
     clock,
     uow,
     audit,
-    storage: new SqliteStorageFlusher(db),
+    storage,
   });
   const maintenance = new MaintenanceService({
     bookings: repos.bookings,
@@ -108,6 +109,7 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   }
 
   function close(): void {
+    storage.dispose(); // cancel a pending background checkpoint (N-1)
     if (db.isOpen) db.close();
   }
 

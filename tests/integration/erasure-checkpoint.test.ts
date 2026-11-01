@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, expect, it } from 'vitest';
 import { startHarness, PASSWORD, type Harness } from '../support/harness.ts';
+import { openDatabase } from '../../src/infrastructure/sqlite/database.ts';
+import { SqliteStorageFlusher } from '../../src/infrastructure/sqlite/storage-flusher.ts';
 
 const EMAIL = 'n1.reader@uni.example';
 const NAME = 'Nora Readername';
@@ -66,3 +68,47 @@ it('N-1: once the reader finishes, the write-ahead log is cleaned in the backgro
   // No restart and no further request: the retry alone must clean the WAL.
   expect(await waitFor(() => !walContainsPersonalData(dbFile), 3000)).toBe(true);
 }, 15_000);
+
+it('N-1: retries stop after the attempt limit with one warning; dispose cancels a pending retry', () => {
+  dir = mkdtempSync(join(tmpdir(), 'roombook-n1-unit-'));
+  const file = join(dir, 'unit.db');
+  const db = openDatabase(file);
+  try {
+    db.exec('CREATE TABLE t (x INTEGER)');
+    db.exec('INSERT INTO t VALUES (1)');
+    reader = new DatabaseSync(file);
+    reader.exec('BEGIN');
+    reader.prepare('SELECT * FROM t').all();
+    db.exec('INSERT INTO t VALUES (2)');
+
+    const queue: Array<() => void> = [];
+    const warnings: string[] = [];
+    let cancelled = 0;
+    const flusher = new SqliteStorageFlusher(db, {
+      maxAttempts: 3,
+      schedule: (fn) => { queue.push(fn); return queue.length; },
+      cancel: () => { cancelled += 1; },
+      warn: (message) => warnings.push(message),
+    });
+
+    flusher.flush(); // attempt 1: busy → retry scheduled, nothing blocks
+    expect(queue).toHaveLength(1);
+    queue.shift()!(); // attempt 2: still busy
+    queue.shift()!(); // attempt 3: limit reached
+    expect(queue).toHaveLength(0);
+    expect(warnings).toHaveLength(1);
+
+    flusher.flush(); // a new erasure restarts the budget
+    expect(queue).toHaveLength(1);
+    flusher.dispose();
+    expect(cancelled).toBe(1);
+    queue.length = 0;
+
+    reader.exec('COMMIT');
+    reader.close();
+    flusher.flush(); // reader gone: the checkpoint succeeds at once
+    expect(queue).toHaveLength(0);
+  } finally {
+    db.close();
+  }
+});
