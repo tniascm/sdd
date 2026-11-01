@@ -66,6 +66,10 @@ describe('NFR-004 — input validation and error hygiene', () => {
 describe('NFR-010 — request rate limit per client', () => {
   it('the 301st request within a minute is refused with Retry-After; the next minute is allowed again', async () => {
     h = await startHarness({ config: { rateLimitPerMinute: 300 } });
+    // startHarness() itself sends requests (admin sign-in, GET /me) from the same client address;
+    // move to a fresh one-minute window so this test counts exactly 300 of its own requests.
+    // (Bug in the first version of this test, reported by the Implementer — VF-4.)
+    h.clock.advance(MINUTE);
     for (let i = 0; i < 300; i++) {
       const r = await h.anon.get('/health');
       if (r.status !== 200) throw new Error(`request ${i + 1} was refused early: ${r.status}`);

@@ -1,0 +1,576 @@
+
+ RUN  v5.0.5 <repo>
+
+ ❯ tests/integration/concurrency.test.ts (1 test | 1 failed) 30ms
+   × SC-003: 20 simultaneous requests for the same free slot → exactly 1 confirmed, 19 SLOT_UNAVAILABLE 29ms
+ ❯ tests/contract/openapi-coverage.test.ts (1 test | 1 failed) 32ms
+   × all 21 documented operations respond according to the contract 27ms
+ ❯ tests/acceptance/us5-privacy.test.ts (7 tests | 7 failed) 66ms
+   ❯ US5 — Control my personal data (3)
+     × US5-1 (FR-018): the export contains my profile and all my bookings and nothing about other users 28ms
+     × US5-2 (FR-019, SC-006): after erasure the user cannot sign in, sessions end, and no stored data names them 11ms
+     × US5-3 (FR-019): upcoming bookings are cancelled on erasure and their slots become free 8ms
+   ❯ US5 — edge cases (4)
+     × a wrong password does not erase the account 4ms
+     × the only administrator cannot erase their account 6ms
+     × a missing password is a validation error 4ms
+     × erasure is audit-logged with the pseudonymous id only 4ms
+ ❯ tests/acceptance/security.test.ts (8 tests | 8 failed) 76ms
+   ❯ NFR-005 — browser security headers (2)
+     × API and UI responses carry a strict CSP and anti-sniffing/anti-framing headers 36ms
+     × the UI page contains no inline scripts 7ms
+   ❯ NFR-004 — input validation and error hygiene (4)
+     × malformed JSON gives a contract-shaped 400 without internal details 8ms
+     × a body larger than 10 kB is refused 4ms
+     × SQL metacharacters in parameters are treated as data 4ms
+     × unknown API paths answer with a JSON 404 6ms
+   ❯ NFR-010 — request rate limit per client (1)
+     × the 301st request within a minute is refused with Retry-After; the next minute is allowed again 4ms
+   ❯ NFR-002 — credentials at rest (1)
+     × neither passwords nor session tokens are stored in clear text 5ms
+ ❯ tests/acceptance/us3-manage.test.ts (7 tests | 7 failed) 64ms
+   ❯ US3 — Manage my bookings (3)
+     × US3-1 (FR-014): cancelling before the start frees the slot, removes it from upcoming bookings and restores the quota 29ms
+     × US3-2 (FR-014): a booking that has already started cannot be cancelled by its owner 13ms
+     × US3-3 (FR-014, NFR-003): cancelling someone else's booking fails exactly like a missing booking and changes nothing 5ms
+   ❯ US3 — listing and edge cases (FR-013) (4)
+     × include=all lists cancelled and past bookings with their status, in start order 4ms
+     × an invalid include value is a validation error 4ms
+     × cancelling twice is rejected 5ms
+     × an ended booking no longer counts toward the quota 4ms
+ ❯ tests/acceptance/us2-auth.test.ts (13 tests | 13 failed) 89ms
+   ❯ US2 — Register, sign in and sign out securely (5)
+     × US2-1 (FR-001): registering with a university email creates a student account and never returns the password 29ms
+     × US2-2 (FR-001): an email outside the allowed domain is rejected 8ms
+     × US2-3 (FR-002, FR-004): correct password gives an 8-hour session; wrong password and unknown email give the same generic error 4ms
+     × US2-4 (FR-004): after 5 failures within 15 minutes even the correct password is refused for 15 minutes, and the lockout is audit-logged 4ms
+     × US2-5 (FR-003): after sign-out the session is no longer accepted 5ms
+   ❯ US2 — edge cases (8)
+     × FR-002: a session expires exactly 8 hours after sign-in 5ms
+     × FR-001: password equal to the email is rejected 6ms
+     × FR-001: password shorter than 12 characters is rejected and the error names the field (NFR-007) 6ms
+     × FR-001: a second account for the same email (any letter case) is rejected 4ms
+     × NFR-004: unknown fields in the request are rejected 4ms
+     × missing or forged tokens are refused 5ms
+     × FR-004: lockout also applies to unknown emails, so it does not reveal which accounts exist 4ms
+     × FR-004: a successful sign-in resets the failure counter 3ms
+ ❯ tests/acceptance/us4-admin.test.ts (12 tests | 12 failed) 89ms
+   ❯ US4 — Administer rooms and bookings (5)
+     × US4-1 (FR-007): an administrator creates a room and it appears in the room list 33ms
+     × US4-2 (NFR-003): non-administrators are refused every administrative operation 7ms
+     × US4-3 (FR-008, FR-016): taking a room out of service blocks booking and cancels its future bookings with a reason 5ms
+     × US4-4 (FR-015): administrators see all bookings of a date with who made them 6ms
+     × US4-5 (FR-017): after promotion to staff, a user's bookings follow staff limits 5ms
+   ❯ US4 — room management edge cases (FR-007) (2)
+     × room names are unique regardless of letter case; capacity must be 1–50; equipment must be known 6ms
+     × administrators edit room details; editing an unknown room is not found 5ms
+   ❯ US4 — administrator cancellation (FR-015) (2)
+     × cancelling another user's booking requires a reason, which the owner then sees 4ms
+     × administrators may cancel a booking in progress but not one that has ended 5ms
+   ❯ US4 — roles and audit (FR-017, FR-020) (3)
+     × the only administrator cannot remove their own administrator role 4ms
+     × administrators can find users by email fragment 4ms
+     × audit events are listed newest first and contain no passwords, tokens or email addresses 3ms
+ ❯ tests/acceptance/us1-booking.test.ts (22 tests | 22 failed) 108ms
+   ❯ US1 — Book a study room (12)
+     × US1-1 (FR-009): a student books a room in service for tomorrow 10:00–11:00 for 4 people and sees it in upcoming bookings 30ms
+     × US1-2 (FR-011): an overlapping booking of the same room is rejected and nothing is created 8ms
+     × US1-3 (FR-011): back-to-back bookings are allowed 4ms
+     ❯ US1-4 (FR-010): rule violations are rejected with an error naming the rule (6)
+       × start in the past 3ms
+       × not on a 30-minute boundary 5ms
+       × ends after 22:00 campus time 4ms
+       × starts before 08:00 campus time 4ms
+       × party size larger than the room capacity 5ms
+       × the error message is human-readable (NFR-007) 4ms
+     × US1-5 (FR-012): a student holding 3 upcoming bookings cannot make a fourth 4ms
+     × US1-6 (FR-012): students are limited to 2 h and 7 days ahead; staff may book 4 h and 30 days ahead 3ms
+     × US1-7 (FR-006, NFR-009): availability shows booked and free intervals but not who booked 3ms
+   ❯ US1 — room list (FR-005) (2)
+     × lists rooms in service with filters for capacity, building and equipment 3ms
+     × requires sign-in 3ms
+   ❯ US1 — edge cases (8)
+     × start equal to end, or end before start, is rejected as too short 3ms
+     × a booking crossing midnight is outside opening hours 3ms
+     × 21:30–22:00 (last slot of the day) is allowed 3ms
+     × a room out of service cannot be booked; an unknown room is not found 3ms
+     × party size 0, purpose over 100 characters and unknown fields are rejected by validation 3ms
+     × markup in the purpose is stored and returned as plain text 3ms
+     × opening hours follow campus local time across the daylight-saving change (2027-03-28, UTC+2 → UTC+3) 3ms
+     × availability of an unknown room is not found and a malformed date is a validation error 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contract/openapi-coverage.test.ts [ tests/contract/openapi-coverage.test.ts ]
+AssertionError: expected [ 'GET /health', …(19) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "GET /health",
++   "POST /auth/register",
++   "POST /auth/logout",
++   "GET /me",
++   "GET /me/export",
++   "POST /me/erase",
++   "GET /rooms",
++   "POST /rooms",
++   "PATCH /rooms/{roomId}",
++   "POST /rooms/{roomId}/out-of-service",
++   "POST /rooms/{roomId}/in-service",
++   "GET /rooms/{roomId}/availability",
++   "POST /bookings",
++   "GET /bookings/mine",
++   "POST /bookings/{bookingId}/cancel",
++   "GET /admin/rooms",
++   "GET /admin/bookings",
++   "GET /admin/users",
++   "PUT /admin/users/{userId}/role",
++   "GET /admin/audit-events",
++ ]
+
+ ❯ tests/contract/openapi-coverage.test.ts:42:19
+     40|   expect(documentedOperations).toHaveLength(21);
+     41|   const missing = documentedOperations.filter((op) => !exercised.has(o…
+     42|   expect(missing).toEqual([]);
+       |                   ^
+     43| });
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/134]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 71 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-005 — browser security headers > API and UI responses carry a strict CSP and anti-sniffing/anti-framing headers
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:12:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-005 — browser security headers > the UI page contains no inline scripts
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:28:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-004 — input validation and error hygiene > malformed JSON gives a contract-shaped 400 without internal details
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:38:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-004 — input validation and error hygiene > a body larger than 10 kB is refused
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:45:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-004 — input validation and error hygiene > SQL metacharacters in parameters are treated as data
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:51:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-004 — input validation and error hygiene > unknown API paths answer with a JSON 404
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:60:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-010 — request rate limit per client > the 301st request within a minute is refused with Retry-After; the next minute is allowed again
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:68:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/134]⎯
+
+ FAIL  tests/acceptance/security.test.ts > NFR-002 — credentials at rest > neither passwords nor session tokens are stored in clear text
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/security.test.ts:89:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/134]⎯
+
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-1 (FR-009): a student books a room in service for tomorrow 10:00–11:00 for 4 people and sees it in upcoming bookings
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-2 (FR-011): an overlapping booking of the same room is rejected and nothing is created
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-3 (FR-011): back-to-back bookings are allowed
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > start in the past
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > not on a 30-minute boundary
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > ends after 22:00 campus time
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > starts before 08:00 campus time
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > party size larger than the room capacity
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > the error message is human-readable (NFR-007)
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-5 (FR-012): a student holding 3 upcoming bookings cannot make a fourth
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-6 (FR-012): students are limited to 2 h and 7 days ahead; staff may book 4 h and 30 days ahead
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-7 (FR-006, NFR-009): availability shows booked and free intervals but not who booked
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — room list (FR-005) > lists rooms in service with filters for capacity, building and equipment
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — room list (FR-005) > requires sign-in
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > start equal to end, or end before start, is rejected as too short
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > a booking crossing midnight is outside opening hours
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > 21:30–22:00 (last slot of the day) is allowed
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > a room out of service cannot be booked; an unknown room is not found
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > party size 0, purpose over 100 characters and unknown fields are rejected by validation
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > markup in the purpose is stored and returned as plain text
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > opening hours follow campus local time across the daylight-saving change (2027-03-28, UTC+2 → UTC+3)
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > availability of an unknown room is not found and a malformed date is a validation error
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/us1-booking.test.ts:11:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/134]⎯
+
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-1 (FR-009): a student books a room in service for tomorrow 10:00–11:00 for 4 people and sees it in upcoming bookings
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-2 (FR-011): an overlapping booking of the same room is rejected and nothing is created
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-3 (FR-011): back-to-back bookings are allowed
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > start in the past
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > not on a 30-minute boundary
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > ends after 22:00 campus time
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > starts before 08:00 campus time
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > party size larger than the room capacity
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-4 (FR-010): rule violations are rejected with an error naming the rule > the error message is human-readable (NFR-007)
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-5 (FR-012): a student holding 3 upcoming bookings cannot make a fourth
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-6 (FR-012): students are limited to 2 h and 7 days ahead; staff may book 4 h and 30 days ahead
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — Book a study room > US1-7 (FR-006, NFR-009): availability shows booked and free intervals but not who booked
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — room list (FR-005) > lists rooms in service with filters for capacity, building and equipment
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — room list (FR-005) > requires sign-in
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > start equal to end, or end before start, is rejected as too short
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > a booking crossing midnight is outside opening hours
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > 21:30–22:00 (last slot of the day) is allowed
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > a room out of service cannot be booked; an unknown room is not found
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > party size 0, purpose over 100 characters and unknown fields are rejected by validation
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > markup in the purpose is stored and returned as plain text
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > opening hours follow campus local time across the daylight-saving change (2027-03-28, UTC+2 → UTC+3)
+ FAIL  tests/acceptance/us1-booking.test.ts > US1 — edge cases > availability of an unknown room is not found and a malformed date is a validation error
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/acceptance/us1-booking.test.ts:16:19
+     14|   bob = await h.newUser();
+     15| });
+     16| afterEach(() => h.close());
+       |                   ^
+     17|
+     18| const slot = (date: string, from: string, to: string) => ({ start: at(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/134]⎯
+
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-1 (FR-001): registering with a university email creates a student account and never returns the password
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-2 (FR-001): an email outside the allowed domain is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-3 (FR-002, FR-004): correct password gives an 8-hour session; wrong password and unknown email give the same generic error
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-4 (FR-004): after 5 failures within 15 minutes even the correct password is refused for 15 minutes, and the lockout is audit-logged
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-5 (FR-003): after sign-out the session is no longer accepted
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-002: a session expires exactly 8 hours after sign-in
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: password equal to the email is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: password shorter than 12 characters is rejected and the error names the field (NFR-007)
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: a second account for the same email (any letter case) is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > NFR-004: unknown fields in the request are rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > missing or forged tokens are refused
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-004: lockout also applies to unknown emails, so it does not reveal which accounts exist
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-004: a successful sign-in resets the failure counter
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/us2-auth.test.ts:7:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/134]⎯
+
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-1 (FR-001): registering with a university email creates a student account and never returns the password
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-2 (FR-001): an email outside the allowed domain is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-3 (FR-002, FR-004): correct password gives an 8-hour session; wrong password and unknown email give the same generic error
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-4 (FR-004): after 5 failures within 15 minutes even the correct password is refused for 15 minutes, and the lockout is audit-logged
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — Register, sign in and sign out securely > US2-5 (FR-003): after sign-out the session is no longer accepted
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-002: a session expires exactly 8 hours after sign-in
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: password equal to the email is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: password shorter than 12 characters is rejected and the error names the field (NFR-007)
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-001: a second account for the same email (any letter case) is rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > NFR-004: unknown fields in the request are rejected
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > missing or forged tokens are refused
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-004: lockout also applies to unknown emails, so it does not reveal which accounts exist
+ FAIL  tests/acceptance/us2-auth.test.ts > US2 — edge cases > FR-004: a successful sign-in resets the failure counter
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/acceptance/us2-auth.test.ts:8:19
+      6| let h: Harness;
+      7| beforeEach(async () => { h = await startHarness(); });
+      8| afterEach(() => h.close());
+       |                   ^
+      9|
+     10| describe('US2 — Register, sign in and sign out securely', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/134]⎯
+
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-1 (FR-014): cancelling before the start frees the slot, removes it from upcoming bookings and restores the quota
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-2 (FR-014): a booking that has already started cannot be cancelled by its owner
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-3 (FR-014, NFR-003): cancelling someone else's booking fails exactly like a missing booking and changes nothing
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > include=all lists cancelled and past bookings with their status, in start order
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > an invalid include value is a validation error
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > cancelling twice is rejected
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > an ended booking no longer counts toward the quota
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/us3-manage.test.ts:12:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/134]⎯
+
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-1 (FR-014): cancelling before the start frees the slot, removes it from upcoming bookings and restores the quota
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-2 (FR-014): a booking that has already started cannot be cancelled by its owner
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — Manage my bookings > US3-3 (FR-014, NFR-003): cancelling someone else's booking fails exactly like a missing booking and changes nothing
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > include=all lists cancelled and past bookings with their status, in start order
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > an invalid include value is a validation error
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > cancelling twice is rejected
+ FAIL  tests/acceptance/us3-manage.test.ts > US3 — listing and edge cases (FR-013) > an ended booking no longer counts toward the quota
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/acceptance/us3-manage.test.ts:17:19
+     15|   bob = await h.newUser();
+     16| });
+     17| afterEach(() => h.close());
+       |                   ^
+     18|
+     19| const tomorrow = (from: string, to: string) => ({ roomId: room.id, sta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/134]⎯
+
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-1 (FR-007): an administrator creates a room and it appears in the room list
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-2 (NFR-003): non-administrators are refused every administrative operation
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-3 (FR-008, FR-016): taking a room out of service blocks booking and cancels its future bookings with a reason
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-4 (FR-015): administrators see all bookings of a date with who made them
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-5 (FR-017): after promotion to staff, a user's bookings follow staff limits
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — room management edge cases (FR-007) > room names are unique regardless of letter case; capacity must be 1–50; equipment must be known
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — room management edge cases (FR-007) > administrators edit room details; editing an unknown room is not found
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — administrator cancellation (FR-015) > cancelling another user's booking requires a reason, which the owner then sees
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — administrator cancellation (FR-015) > administrators may cancel a booking in progress but not one that has ended
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > the only administrator cannot remove their own administrator role
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > administrators can find users by email fragment
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > audit events are listed newest first and contain no passwords, tokens or email addresses
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/us4-admin.test.ts:9:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/134]⎯
+
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-1 (FR-007): an administrator creates a room and it appears in the room list
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-2 (NFR-003): non-administrators are refused every administrative operation
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-3 (FR-008, FR-016): taking a room out of service blocks booking and cancels its future bookings with a reason
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-4 (FR-015): administrators see all bookings of a date with who made them
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — Administer rooms and bookings > US4-5 (FR-017): after promotion to staff, a user's bookings follow staff limits
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — room management edge cases (FR-007) > room names are unique regardless of letter case; capacity must be 1–50; equipment must be known
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — room management edge cases (FR-007) > administrators edit room details; editing an unknown room is not found
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — administrator cancellation (FR-015) > cancelling another user's booking requires a reason, which the owner then sees
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — administrator cancellation (FR-015) > administrators may cancel a booking in progress but not one that has ended
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > the only administrator cannot remove their own administrator role
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > administrators can find users by email fragment
+ FAIL  tests/acceptance/us4-admin.test.ts > US4 — roles and audit (FR-017, FR-020) > audit events are listed newest first and contain no passwords, tokens or email addresses
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/acceptance/us4-admin.test.ts:12:19
+     10|   alice = await h.newUser({ displayName: 'Alice Student' });
+     11| });
+     12| afterEach(() => h.close());
+       |                   ^
+     13|
+     14| describe('US4 — Administer rooms and bookings', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/134]⎯
+
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-1 (FR-018): the export contains my profile and all my bookings and nothing about other users
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-2 (FR-019, SC-006): after erasure the user cannot sign in, sessions end, and no stored data names them
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-3 (FR-019): upcoming bookings are cancelled on erasure and their slots become free
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > a wrong password does not erase the account
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > the only administrator cannot erase their account
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > a missing password is a validation error
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > erasure is audit-logged with the pseudonymous id only
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/acceptance/us5-privacy.test.ts:11:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/134]⎯
+
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-1 (FR-018): the export contains my profile and all my bookings and nothing about other users
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-2 (FR-019, SC-006): after erasure the user cannot sign in, sessions end, and no stored data names them
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — Control my personal data > US5-3 (FR-019): upcoming bookings are cancelled on erasure and their slots become free
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > a wrong password does not erase the account
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > the only administrator cannot erase their account
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > a missing password is a validation error
+ FAIL  tests/acceptance/us5-privacy.test.ts > US5 — edge cases > erasure is audit-logged with the pseudonymous id only
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/acceptance/us5-privacy.test.ts:16:19
+     14|   bob = await h.newUser();
+     15| });
+     16| afterEach(() => h.close());
+       |                   ^
+     17|
+     18| /** Every row of every table, serialised — used to prove that erasure …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/134]⎯
+
+ FAIL  tests/contract/openapi-coverage.test.ts > all 21 documented operations respond according to the contract
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/contract/openapi-coverage.test.ts:8:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/134]⎯
+
+ FAIL  tests/integration/concurrency.test.ts > SC-003: 20 simultaneous requests for the same free slot → exactly 1 confirmed, 19 SLOT_UNAVAILABLE
+Error: Contract: status 404 is not documented for POST /auth/login; body={"error":{"code":"NOT_FOUND","message":"The requested resource does not exist."}}
+ ❯ checkContract tests/support/contract.ts:97:11
+     95|   const v = validatorFor(op, status);
+     96|   if (v === undefined) {
+     97|     throw new Error(
+       |           ^
+     98|       `Contract: status ${status} is not documented for ${op.method.to…
+     99|     );
+ ❯ Client.send tests/support/harness.ts:56:5
+ ❯ login tests/support/harness.ts:116:15
+ ❯ startHarness tests/support/harness.ts:121:22
+ ❯ tests/integration/concurrency.test.ts:8:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/134]⎯
+
+ FAIL  tests/integration/concurrency.test.ts > SC-003: 20 simultaneous requests for the same free slot → exactly 1 confirmed, 19 SLOT_UNAVAILABLE
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ tests/integration/concurrency.test.ts:9:19
+      7| let h: Harness;
+      8| beforeEach(async () => { h = await startHarness(); });
+      9| afterEach(() => h.close());
+       |                   ^
+     10|
+     11| it('SC-003: 20 simultaneous requests for the same free slot → exactly …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/134]⎯
+
+
+ Test Files  8 failed (8)
+      Tests  71 failed (71)
+   Start at  18:56:23
+   Duration  525ms (import 71%, tests 18%, transform 10%, worker 1%)
+

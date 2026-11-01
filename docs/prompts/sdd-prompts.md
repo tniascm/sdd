@@ -174,3 +174,21 @@ Report: tasks done, test summary, typecheck/lint, commits, spec problems found, 
 | VF-1 | test harness (contract checker) | NFR-010 limits *every* operation, but the contract documented `429` only on register/login → a correct `429` elsewhere would be a contract violation | `429 TooManyRequests` added to all 21 operations in `openapi.yaml` |
 | VF-2 | US2-4 lockout test | data-model did not say whether attempts refused *during* a lock count as new failures — if they did, a user who keeps retrying would be locked forever | data-model amended: refused attempts are not failures, but are audit-logged |
 | VF-3 | US4-4 admin day view | first draft of the test asserted an ordering that FR-015 never specifies | test made order-independent (tests must not invent requirements either) |
+
+### SDD-P7 — outcome
+
+- T001–T019 done in 22 min (100 tool calls); 7 commits, each staged with explicit paths and
+  referencing task + requirement IDs. Own tests: 148 passed, line coverage 98.9 %; typecheck clean.
+  Test-first evidence for T008/T010/T011/T012/T017 (red → green logs) in `docs/evidence/implementer-phase2/`.
+- The Verifier suite was **red for the right reason**: 71/71 failing at sign-in (`POST /auth/login`
+  → 404, rejected by the contract checker) — `docs/evidence/test-run-1-verifier-red.txt`.
+- The Implementer **reported instead of silently deviating** (as instructed) — 6 points, of which
+  two were genuine defects in the *Verifier's* work:
+  - VF-4: the NFR-010 test counted wrong — the harness's own sign-in requests already used 2 of the
+    300 allowed requests, so a *correct* limiter failed the test. Fixed in the test, not in the code.
+  - 28 lint errors (`no-explicit-any`) in Verifier test files; resolved by allowing `any` only in
+    `tests/**` (untyped JSON bodies), keeping it banned in `src/`.
+  - Spec gaps closed by decision (research R12): ID generation without a port; bootstrap-admin
+    semantics; new `ADMIN_DISPLAY_NAME` variable.
+- Lesson: the role split works in both directions — the Implementer caught a Verifier bug that
+  would otherwise have pushed the Implementer to "fix" a correct rate limiter.

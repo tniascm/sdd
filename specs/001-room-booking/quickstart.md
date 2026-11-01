@@ -16,7 +16,7 @@ npm start                       # http://localhost:3000  (UI)  ·  /api/v1 (API)
 
 Configuration (environment variables): `PORT` (3000), `DB_FILE` (`data/roombook.db`),
 `CAMPUS_TIME_ZONE` (`Europe/Helsinki`), `OPENING_HOURS` (`08:00-22:00`),
-`ALLOWED_EMAIL_DOMAINS` (`uni.example`), `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
+`ALLOWED_EMAIL_DOMAINS` (`uni.example`), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_DISPLAY_NAME` (`Administrator`),
 `RATE_LIMIT_PER_MINUTE` (300).
 
 ## Validation scenarios

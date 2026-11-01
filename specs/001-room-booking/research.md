@@ -111,3 +111,13 @@ taken from memory: package versions with `npm view`, runtime features with small
 
 - **Decision**: ESLint **10.14.0** + typescript-eslint **8.72.1** (recommended, non-type-aware
   rules) — the reason TypeScript is pinned in R1.
+
+## R12. Identifiers and the bootstrap administrator (decided after Phase 2, Implementer questions)
+
+- **IDs**: `crypto.randomUUID()` is called in the application layer; no `IdGenerator` port.
+  Principle III keeps *rules* free of randomness; no rule depends on an ID's value and no test
+  asserts one, so a port would add indirection without improving testability.
+- **Bootstrap administrator**: created only when no account with `ADMIN_EMAIL` exists; an existing
+  account is never modified. Its display name comes from `ADMIN_DISPLAY_NAME` (default
+  `Administrator`). Creation is not audit-logged — FR-020 lists self-registration, and this is an
+  installation step.
