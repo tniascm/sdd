@@ -106,10 +106,11 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
 let userCounter = 0;
 let roomCounter = 0;
 
-export async function startHarness(opts: { now?: string; config?: Partial<Config> } = {}): Promise<Harness> {
+export async function startHarness(opts: { now?: string; config?: Partial<Config>; dbFile?: string } = {}): Promise<Harness> {
   const clock = new FixedClock(opts.now ?? DEFAULT_NOW);
-  const config = testConfig(opts.config);
-  const container = buildContainer({ dbFile: ':memory:', clock, config, hasherParams: { N: 1024, r: 8, p: 1 } });
+  const dbFile = opts.dbFile ?? ':memory:';
+  const config = testConfig({ dbFile, ...opts.config });
+  const container = buildContainer({ dbFile, clock, config, hasherParams: { N: 1024, r: 8, p: 1 } });
   await container.bootstrapAdmin();
   const app = createApp(container);
   const anon = new Client(app);

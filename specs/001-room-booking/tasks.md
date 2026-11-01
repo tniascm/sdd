@@ -54,7 +54,7 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 - [X] T017 (Implementer, test first) `tests/unit/rate-limit.test.ts` then `src/http/rate-limit.ts`: fixed 60-second window per client address using the injected `Clock`; over the limit → 429 `RATE_LIMITED` + `Retry-After` seconds (NFR-010)
 - [X] T018 (Implementer) `src/http/auth-middleware.ts`: `Authorization: Bearer` → token hash → valid session (not revoked, not expired, user exists) → `req.actor = { userId, role }`; otherwise 401 `UNAUTHENTICATED`; `requireAdmin` → 403 `FORBIDDEN`
 - [X] T019 (Implementer) `src/container.ts` `buildContainer({ dbFile, clock, config, hasherParams? })` returning services + `bootstrapAdmin()` (creates/ensures the admin from `config.admin`); `src/http/app.ts` `createApp(container)`: helmet with CSP (NFR-005) from research R9, `express.json({ limit: '10kb' })`, rate limiter, `/api/v1` routers, JSON 404 `NOT_FOUND` for unknown `/api` paths, static `public/`, error handler; `src/server.ts` entry point
-- [ ] T020 [P] (Verifier) `tests/support/fixed-clock.ts` (settable/advanceable `Clock`), `tests/support/contract.ts` (loads `contracts/openapi.yaml`, ajv 2020 + formats, validates status is documented and body matches schema for the matched operation), `tests/support/harness.ts` (in-memory container + app, helper API client that validates **every** response against the contract, helpers to register/sign in users and create rooms)
+- [X] T020 [P] (Verifier) `tests/support/fixed-clock.ts` (settable/advanceable `Clock`), `tests/support/contract.ts` (loads `contracts/openapi.yaml`, ajv 2020 + formats, validates status is documented and body matches schema for the matched operation), `tests/support/harness.ts` (in-memory container + app, helper API client that validates **every** response against the contract, helpers to register/sign in users and create rooms)
 
 **Checkpoint**: foundation ready — unit and integration tests above pass; the app starts and answers `GET /api/v1/health`.
 
@@ -68,7 +68,7 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Tests for User Story 2 ⚠️ (write first, run red)
 
-- [ ] T021 [P] [US2] (Verifier) `tests/acceptance/us2-auth.test.ts`: scenarios US2-1 … US2-5 + edge cases (session refused after sign-out, after 8 h expiry, after account deletion; password equal to email; unknown fields rejected)
+- [X] T021 [P] [US2] (Verifier) `tests/acceptance/us2-auth.test.ts`: scenarios US2-1 … US2-5 + edge cases (session refused after sign-out, after 8 h expiry, after account deletion; password equal to email; unknown fields rejected)
 
 ### Implementation for User Story 2
 
@@ -89,8 +89,8 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Tests for User Story 1 ⚠️ (write first, run red)
 
-- [ ] T026 [P] [US1] (Verifier) `tests/acceptance/us1-booking.test.ts`: US1-1 … US1-7 + edge cases (start = end, crossing midnight, after 22:00, room out of service, unknown room → 404, party size 0, purpose > 100 chars, unknown field, `<script>` purpose stored and returned as plain text, DST day availability)
-- [ ] T027 [P] [US1] (Verifier) `tests/integration/concurrency.test.ts`: 20 simultaneous `POST /bookings` for the same slot → exactly 1 × 201 and 19 × 409 `SLOT_UNAVAILABLE` (SC-003, NFR-006)
+- [X] T026 [P] [US1] (Verifier) `tests/acceptance/us1-booking.test.ts`: US1-1 … US1-7 + edge cases (start = end, crossing midnight, after 22:00, room out of service, unknown room → 404, party size 0, purpose > 100 chars, unknown field, `<script>` purpose stored and returned as plain text, DST day availability)
+- [X] T027 [P] [US1] (Verifier) `tests/integration/concurrency.test.ts`: 20 simultaneous `POST /bookings` for the same slot → exactly 1 × 201 and 19 × 409 `SLOT_UNAVAILABLE` (SC-003, NFR-006)
 - [X] T028 [P] [US1] (Implementer, test first) `tests/unit/booking-rules.test.ts` (NFR-008 — rules tested without DB/clock): decision table per role with boundary values (30 min ok / 0 min `TOO_SHORT`; student 120 min ok / 150 `TOO_LONG`; staff 240 ok / 270 `TOO_LONG`; start exactly 7 days ahead ok / +30 min `TOO_FAR_AHEAD`; 3rd upcoming ok / 4th `QUOTA_REACHED`; 21:30–22:00 ok / 21:30–22:30 `OUTSIDE_OPENING_HOURS`)
 - [X] T029 [P] [US1] (Implementer, test first) `tests/unit/availability.test.ts`
 
@@ -113,7 +113,7 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T036 [P] [US3] (Verifier) `tests/acceptance/us3-manage.test.ts`: US3-1 … US3-3 + `include=all` shows cancelled/past bookings with status and reason; cancelling twice → `ALREADY_CANCELLED`; quota restored after cancel
+- [X] T036 [P] [US3] (Verifier) `tests/acceptance/us3-manage.test.ts`: US3-1 … US3-3 + `include=all` shows cancelled/past bookings with status and reason; cancelling twice → `ALREADY_CANCELLED`; quota restored after cancel
 
 ### Implementation for User Story 3
 
@@ -128,7 +128,7 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T039 [P] [US4] (Verifier) `tests/acceptance/us4-admin.test.ts`: US4-1 … US4-5 + `ROOM_NAME_TAKEN`; capacity outside 1–50 rejected; admin cancel without reason → `REASON_REQUIRED`; owner sees admin reason; `LAST_ADMIN` on demoting the only admin; audit events newest first and free of passwords, tokens and email addresses
+- [X] T039 [P] [US4] (Verifier) `tests/acceptance/us4-admin.test.ts`: US4-1 … US4-5 + `ROOM_NAME_TAKEN`; capacity outside 1–50 rejected; admin cancel without reason → `REASON_REQUIRED`; owner sees admin reason; `LAST_ADMIN` on demoting the only admin; audit events newest first and free of passwords, tokens and email addresses
 
 ### Implementation for User Story 4
 
@@ -146,7 +146,7 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T045 [P] [US5] (Verifier) `tests/acceptance/us5-privacy.test.ts`: US5-1 … US5-3 + wrong password → 403 `PASSWORD_INCORRECT`; only admin cannot erase → 409 `LAST_ADMIN`; SC-006 (after erasure no table contains the email or display name)
+- [X] T045 [P] [US5] (Verifier) `tests/acceptance/us5-privacy.test.ts`: US5-1 … US5-3 + wrong password → 403 `PASSWORD_INCORRECT`; only admin cannot erase → 409 `LAST_ADMIN`; SC-006 (after erasure no table contains the email or display name)
 
 ### Implementation for User Story 5
 
@@ -157,12 +157,12 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T048 [P] (Verifier) `tests/contract/openapi-coverage.test.ts`: every operation in `openapi.yaml` is exercised at least once and every response validates
-- [ ] T049 [P] (Verifier) `tests/acceptance/security.test.ts`: NFR-004/005/010 — security headers and CSP, unknown fields, malformed JSON without stack trace, body > 10 kB, 301st request in a minute → 429 + `Retry-After`, admin endpoints → 403 for students
+- [X] T048 [P] (Verifier) `tests/contract/openapi-coverage.test.ts`: every operation in `openapi.yaml` is exercised at least once and every response validates
+- [X] T049 [P] (Verifier) `tests/acceptance/security.test.ts`: NFR-004/005/010 — security headers and CSP, unknown fields, malformed JSON without stack trace, body > 10 kB, 301st request in a minute → 429 + `Retry-After`, admin endpoints → 403 for students
 - [X] T050 (Implementer, test first) `tests/unit/maintenance.test.ts` then `src/application/maintenance.ts` + `src/cli/purge.ts` (FR-021: delete bookings that ended > 12 months ago and audit events older than 12 months; audit `maintenance.purged`)
 - [X] T051 [P] (Implementer) `scripts/seed.ts` (admin from env + 6 demo rooms) and `scripts/perf.ts` (NFR-001, SC-004: 50 rooms, 5,000 bookings, 20 concurrent workers, prints p95 per endpoint)
 - [X] T052 (Implementer) `README.md`: run, test, configuration, architecture overview
-- [ ] T053 (Verifier) Run quality gates (SC-001: all acceptance tests green) and store outputs in `docs/evidence/`: `typecheck`, `lint`, `test:coverage` (≥ 85 % lines), `npm audit --omit=dev`, `perf`
+- [X] T053 (Verifier) Run quality gates (SC-001: all acceptance tests green) and store outputs in `docs/evidence/`: `typecheck`, `lint`, `test:coverage` (≥ 85 % lines), `npm audit --omit=dev`, `perf`
 
 - [ ] T054 (Verifier) Independent review (constitution gate 5, SC-005): a fresh AI reviewer with no access to the implementation conversation reviews `src/` against the spec and OWASP ASVS L1 / API Top 10; findings, resolutions and human sign-off recorded in `docs/evidence/audit-log.md`
 - [ ] T055 (Verifier) Usability verification (NFR-007, SC-002): scripted headless-browser walkthrough at 360 px width using keyboard only — register, sign in, find a room for 4, book tomorrow 10:00–11:00 — timed; confirm field-specific error messages; screenshots in `docs/evidence/`

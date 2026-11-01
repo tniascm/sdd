@@ -41,7 +41,10 @@ Valid ⇔ `revokedAt IS NULL AND now < expiresAt AND user exists`.
 Locked ⇔ there are ≥ 5 failures within the 15 minutes ending at the most recent failure, **and**
 `now < mostRecentFailure + 15 min` (i.e. the lock lasts until 15 min after the most recent failure).
 *(Wording corrected after implementation: the earlier text "≥ 5 failures with `at > now − 15 min`"
-contradicted "lasts until 15 min after the most recent failure" — reported by the Implementer.)* A successful sign-in deletes the account's failures. Attempts refused *because of* the
+contradicted "lasts until 15 min after the most recent failure" — reported by the Implementer.)* An attempt is recorded as a failure **before** its password is verified, in the same synchronous
+step as the lock check, and removed again if the password turns out to be correct — so concurrent
+attempts cannot exceed the limit *(amended after review finding R-1)*. A successful sign-in deletes
+the account's failures. Attempts refused *because of* the
 lock are not checked and not recorded as failures (otherwise a retrying user would stay locked
 forever); each refusal is audit-logged as `auth.locked`. *(Amended 2026-11-01 by the Verifier
 while writing US2-4 — the original text did not say whether refused attempts count.)*
@@ -111,10 +114,11 @@ cancelled ── (terminal)
 | actorUserId | uuid \| null | pseudonymous id only; never email, password or token |
 | action | enum | `user.registered`, `auth.login.succeeded`, `auth.login.failed`, `auth.locked`, `auth.logout`, `user.erased`, `user.role_changed`, `room.created`, `room.updated`, `room.out_of_service`, `room.in_service`, `booking.cancelled_by_admin`, `maintenance.purged` |
 | targetType / targetId | text \| null | e.g. `room` / room id |
-| details | JSON | small structured facts (e.g. `{ "from": "student", "to": "staff" }`, `{ "emailHash": "…" }` for failed sign-in) — never raw email |
+| details | JSON | small structured facts (e.g. `{ "from": "student", "to": "staff" }`, no email-derived value for failed sign-in — R-3) — never raw email |
 
 **Retention (FR-021)**: maintenance task deletes bookings with `end < now − 365 days` and audit
-events with `at < now − 365 days`.
+events with `at < now − 365 days`, login failures older than 24 h, and sessions whose
+`expiresAt` or `revokedAt` lies more than 24 h in the past (R-9).
 
 ## Relationships
 

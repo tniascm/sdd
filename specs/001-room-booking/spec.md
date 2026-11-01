@@ -198,6 +198,8 @@ reference the person.
 - **FR-003**: System MUST let users sign out, after which the session is no longer accepted.
 - **FR-004**: System MUST refuse sign-in for an account for 15 minutes after 5 failed attempts
   within 15 minutes, and MUST give the same error for unknown email and wrong password.
+  Concurrent attempts MUST NOT bypass the limit: however many requests arrive at once, at most 5
+  passwords per account are checked within a lock window. *(Amended after independent review, R-1)*
 
 **Rooms**
 
@@ -245,12 +247,19 @@ reference the person.
 - **FR-019**: Users MUST be able to delete their account after re-entering their password. All
   sessions end, profile data is erased and past bookings are kept without any link to the person.
   Upcoming bookings are first cancelled automatically with the reason "Account deleted".
+  Cancellation reasons on the user's bookings are erased as well, and no copy of the person's email
+  or display name may remain in the database files afterwards (deleted content is overwritten and
+  the write-ahead log is checkpointed). Wrong passwords entered for deletion count towards the
+  FR-004 lock. *(Amended after independent review, R-2, R-7, R-10)*
 - **FR-020**: System MUST record an audit event for: registration, successful and failed sign-in,
   lockout, sign-out, account deletion, role change, room creation/update/service change, and any
   cancellation by an administrator. Audit events MUST NOT contain passwords or session secrets.
-  Administrators MUST be able to list audit events, newest first.
+  Administrators MUST be able to list audit events, newest first. Failed sign-in events identify the
+  account only by its pseudonymous id (when it exists) and contain no value derived from the email
+  address. *(Amended after independent review, R-3)*
 - **FR-021**: Operators MUST be able to run a maintenance task that permanently deletes bookings
-  that ended more than 12 months ago and audit events older than 12 months.
+  that ended more than 12 months ago and audit events older than 12 months, plus sign-in failure
+  records older than 24 hours and sessions that expired or were revoked more than 24 hours ago. *(Amended after independent review, R-9)*
 
 ### Non-Functional Requirements
 
@@ -259,19 +268,22 @@ reference the person.
   developer laptop.
 - **NFR-002 (Security — credentials)**: Passwords MUST be stored only as salted, memory-hard
   hashes; session secrets MUST be stored only in hashed form; neither may appear in any response
-  or log.
+  or log. API responses MUST NOT be stored by browser or proxy caches. *(Amended after independent review, R-5)*
 - **NFR-003 (Security — authorisation)**: Every operation on a booking or user MUST check that
   the caller owns the object or is an administrator.
 - **NFR-004 (Security — input)**: Every request body and parameter MUST be validated against the
   published interface contract; unknown fields MUST be rejected; error responses MUST NOT reveal
-  internal details (stack traces, queries).
+  internal details (stack traces, queries). Dates outside 2000-01-01 … 2099-12-31 are invalid
+  input. *(Amended after independent review, R-8)*
 - **NFR-005 (Security — transport & browser)**: Responses MUST carry protective browser security
-  headers (content-security policy without inline scripts, no MIME sniffing, no framing).
+  headers (content-security policy without inline scripts, no MIME sniffing, no framing; base URI
+  and form targets restricted to the site itself). *(Amended after independent review, R-12)*
 - **NFR-006 (Reliability)**: Concurrent booking requests for the same slot MUST result in exactly
   one confirmed booking; no partially-written booking may ever be visible.
 - **NFR-007 (Usability)**: A first-time user MUST be able to sign in and book a room in under
   2 minutes; every validation error MUST state which field or rule failed; all functions MUST be
-  operable with the keyboard alone and on a 360-pixel-wide screen.
+  operable with the keyboard alone and on a 360-pixel-wide screen. All dates and times are shown in
+  campus time with English formatting, and choosing a start time offers only end times after it. *(Amended after independent review, R-11, U-1, U-2)*
 - **NFR-008 (Maintainability/Testability)**: Booking rules MUST be verifiable without a database,
   network or real clock; automated tests MUST cover at least 85 % of source lines.
 - **NFR-009 (Privacy)**: Only email, display name, role and bookings are stored about a person;

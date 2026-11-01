@@ -32,9 +32,10 @@ paths:
               schema:
                 type: object
                 additionalProperties: false
-                required: [status]
+                required: [status, timeZone]
                 properties:
                   status: { const: ok }
+                  timeZone: { type: string, description: 'Campus IANA time zone, used by the UI to show campus time (R-11)' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /auth/register:
@@ -253,7 +254,7 @@ paths:
         - name: date
           in: query
           required: true
-          schema: { type: string, format: date }
+          schema: { type: string, format: date, pattern: '^20\d{2}-\d{2}-\d{2}$' }
       responses:
         '200':
           description: OK (no booker identity — NFR-009)
@@ -350,7 +351,7 @@ paths:
         - name: date
           in: query
           required: true
-          schema: { type: string, format: date }
+          schema: { type: string, format: date, pattern: '^20\d{2}-\d{2}-\d{2}$' }
       responses:
         '200':
           description: OK

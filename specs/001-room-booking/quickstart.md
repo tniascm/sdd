@@ -9,7 +9,7 @@
 
 ```bash
 npm ci
-cp .env.example .env            # optional: change ADMIN_EMAIL / ADMIN_PASSWORD / TZ settings
+cp .env.example .env            # REQUIRED: set ADMIN_PASSWORD (start-up refuses an empty or example value — R-4)
 npm run seed                    # creates the first admin (from env) and 6 demo rooms
 npm start                       # http://localhost:3000  (UI)  ·  /api/v1 (API)
 ```

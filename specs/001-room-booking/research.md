@@ -134,3 +134,19 @@ taken from memory: package versions with `npm view`, runtime features with small
 | Several rule violations at once | first failing rule reported, in order: slot boundary → too short → in past → opening hours → too long → too far ahead → party size → quota | FR-010 says "naming the violated rule" |
 | `auth.locked` | logged on every refused attempt (not when the lock begins) | data-model amendment VF-2 |
 | Lockout rule | pure domain function `src/domain/lockout.ts` | Principle III |
+
+## R14. Decisions after the independent review (`docs/evidence/review-findings.md`)
+
+- **Lockout under concurrency (R-1)**: record the attempt as a failure before the asynchronous
+  password check (in the same synchronous step as the lock check) and delete it on success.
+- **On-disk erasure (R-2)**: `PRAGMA secure_delete = ON` and a `wal_checkpoint(TRUNCATE)` after erasure.
+- **Audit pseudonymisation (R-3)**: failed sign-in events carry the account id as target (if any) and
+  no email hash; `login_failures` keeps the hash only for ≤ 24 h (R-9) and loses it on erasure.
+- **Admin password (R-4)**: `.env.example` ships an empty `ADMIN_PASSWORD`; `loadConfig` rejects empty
+  values and the old placeholder.
+- **Rate limiter (R-6)**: expired windows are evicted so memory stays bounded. *Accepted risk*: behind a
+  reverse proxy every client shares one address (deployment must set Express `trust proxy`), and
+  rotating IPv6 addresses evade per-address limits; FR-004 still caps guesses per account.
+- **R-13 / R-14** accepted and recorded in the audit log (no UPDATE path to `confirmed` exists; breached-
+  password check, password change and email verification deferred to a later version — needs a decision
+  from the team).
