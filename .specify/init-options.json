@@ -1,0 +1,8 @@
+{
+  "ai": "claude",
+  "ai_skills": true,
+  "script": "sh",
+  "feature_numbering": "sequential",
+  "speckit_version": "1.2.5",
+  "installed_by": "manual reproduction of `specify init` from the tagged v1.2.5 source"
+}
