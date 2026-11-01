@@ -138,7 +138,8 @@ Key decisions (details in [research.md](specs/001-room-booking/research.md)):
   bookings, clears booking purposes and cancellation reasons, deletes the user and their
   sessions, and keeps past bookings only as anonymous room-usage records. SQLite runs with
   `secure_delete` and the write-ahead log is checkpointed after an erasure, so the deleted
-  email and name do not remain in the database files. Audit events hold pseudonymous ids,
+  email and name do not remain in the database files. The checkpoint never blocks other requests:
+  while another connection (e.g. a backup) is reading, it is retried in the background. Audit events hold pseudonymous ids,
   never emails, email hashes, passwords or tokens. API responses are sent with
   `Cache-Control: no-store`.
 - **Browser security.** Content-Security-Policy without inline scripts or styles, no framing,
