@@ -3,8 +3,7 @@
 Constitution quality gate 5 and success criterion SC-005. Every defect found during the SDD build is
 listed: where it was found, by which technique, and how it was resolved. Detailed evidence is in the
 linked files. "AI" = a Claude Code agent. In this autonomous run the human roles (product owner,
-reviewer) were played by the orchestrating agent; the **human sign-off at the end is still open
-[TEAM]**.
+reviewer) were played by the orchestrating agent; the <mark>**human sign-off at the end is still open**</mark>.
 
 ## 1. Specification and design defects (caught before code existed)
 
@@ -50,7 +49,7 @@ reviewer) were played by the orchestrating agent; the **human sign-off at the en
 | R-11 | Low | reviewer | UI used browser time zone before availability loaded | `/health` exposes campus zone; UI waits for it | Fixed — verified in a real browser with a different campus time zone |
 | R-12 | Info | reviewer | CSP without `base-uri` / `form-action` | added | Fixed |
 | R-13 | Info | reviewer | overlap trigger covers INSERT only | **accepted** — no code path re-confirms a booking | Accepted |
-| R-14 | Info | reviewer | ASVS L1 items outside the spec: breached-password check, password change, email verification; per-account lockout allows targeted lock-out | **accepted risk — needs a team decision [TEAM]** (research R14) | Accepted |
+| R-14 | Info | reviewer | ASVS L1 items outside the spec: breached-password check, password change, email verification; per-account lockout allows targeted lock-out | <mark>**accepted risk — needs your decision**</mark> (research R14) | Accepted |
 | U-1 | Medium | Verifier — keyboard-only 360-px walkthrough | End list not updated when Start changes → error on first try | End rebuilt after Start, Start + 1 h preselected | Fixed |
 | U-2 | Low | same | dates in browser locale ((non-English month name)) in an English UI | `en-GB` formatting, campus time | Fixed |
 | U-3 | Low | same | `favicon.ico` 404 on every load | `favicon.svg` + `<link rel=icon>` | Fixed |
@@ -79,12 +78,13 @@ New findings from the re-review — **open at release**, recorded per constituti
 
 | ID | Sev. | Finding | Planned resolution | Owner |
 |---|---|---|---|---|
-| N-1 | Low | After erasure, `wal_checkpoint(TRUNCATE)` blocks the server for the 5 s busy timeout if another connection (backup, `sqlite3` shell, `npm run purge`) is reading; the "busy" result is ignored and the WAL keeps the erased email/name until the next checkpoint (measured: 5,171 ms erase, 416 KB WAL containing both strings) | check the checkpoint result; retry in the background with a short timeout; document that backups must use SQLite's online backup API; add a regression test with a concurrent reader | [TEAM] |
-| N-2 | Info | Rate-limiter eviction assumes a monotonic clock; after the system clock steps back by J s, an expired window can keep refusing a client for up to J s | keep the per-key expiry check in `hit()` or use `performance.now()` | [TEAM] |
+| N-1 | Low | After erasure, `wal_checkpoint(TRUNCATE)` blocks the server for the 5 s busy timeout if another connection (backup, `sqlite3` shell, `npm run purge`) is reading; the "busy" result is ignored and the WAL keeps the erased email/name until the next checkpoint (measured: 5,171 ms erase, 416 KB WAL containing both strings) | check the checkpoint result; retry in the background with a short timeout; document that backups must use SQLite's online backup API; add a regression test with a concurrent reader | <mark>[Your name]</mark> |
+| N-2 | Info | Rate-limiter eviction assumes a monotonic clock; after the system clock steps back by J s, an expired window can keep refusing a client for up to J s | keep the per-key expiry check in `hit()` or use `performance.now()` | <mark>[Your name]</mark> |
 
-## 6. Human sign-off **[TEAM]**
+## 6. Human sign-off
 
-| Role | Name | Decision on accepted risks R-6 (proxy/IPv6), R-13, R-14 | Date | Signature |
+One-person team — the sole member signs for all roles.
+
+| Role | Name | Decision on accepted risks R-6 (proxy/IPv6), R-13, R-14 and open N-1, N-2 | Date | Signature |
 |---|---|---|---|---|
-| Verifier | [Name 3] | | | |
-| Specifier | [Name 1] | | | |
+| Specifier · Prompt engineer · Verifier | <mark>[Your name]</mark> | <mark>[accept / schedule each]</mark> | <mark>[date]</mark> | <mark>[signature]</mark> |
