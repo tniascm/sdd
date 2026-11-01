@@ -164,8 +164,8 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 - [X] T052 (Implementer) `README.md`: run, test, configuration, architecture overview
 - [X] T053 (Verifier) Run quality gates (SC-001: all acceptance tests green) and store outputs in `docs/evidence/`: `typecheck`, `lint`, `test:coverage` (≥ 85 % lines), `npm audit --omit=dev`, `perf`
 
-- [ ] T054 (Verifier) Independent review (constitution gate 5, SC-005): a fresh AI reviewer with no access to the implementation conversation reviews `src/` against the spec and OWASP ASVS L1 / API Top 10; findings, resolutions and human sign-off recorded in `docs/evidence/audit-log.md`
-- [ ] T055 (Verifier) Usability verification (NFR-007, SC-002): scripted headless-browser walkthrough at 360 px width using keyboard only — register, sign in, find a room for 4, book tomorrow 10:00–11:00 — timed; confirm field-specific error messages; screenshots in `docs/evidence/`
+- [X] T054 (Verifier) Independent review (constitution gate 5, SC-005): a fresh AI reviewer with no access to the implementation conversation reviews `src/` against the spec and OWASP ASVS L1 / API Top 10; findings, resolutions and human sign-off recorded in `docs/evidence/audit-log.md`
+- [X] T055 (Verifier) Usability verification (NFR-007, SC-002): scripted headless-browser walkthrough at 360 px width using keyboard only — register, sign in, find a room for 4, book tomorrow 10:00–11:00 — timed; confirm field-specific error messages; screenshots in `docs/evidence/`
 
 ---
 
