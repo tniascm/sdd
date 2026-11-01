@@ -247,7 +247,7 @@ describe('email domain', () => {
 
   test('only @uni.example addresses can sign up', async () => {
     const c = new Client(server.base);
-    for (const email of ['eve@gmail.com', 'dan@student.uni.example', 'dan@uni.example.com']) {
+    for (const email of ['eve@example.com', 'dan@student.uni.example', 'dan@uni.example.com']) {
       const res = await c.post('/signup', { name: 'Eve', email, password: 'long-password' });
       assert.equal(res.status, 400, email);
       assert.match(res.text, /@uni\.example/);

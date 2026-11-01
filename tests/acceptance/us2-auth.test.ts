@@ -17,7 +17,7 @@ describe('US2 — Register, sign in and sign out securely', () => {
   });
 
   it('US2-2 (FR-001): an email outside the allowed domain is rejected', async () => {
-    const r = await h.anon.post('/auth/register', { email: 'bob@gmail.com', displayName: 'Bob', password: PASSWORD });
+    const r = await h.anon.post('/auth/register', { email: 'bob@example.com', displayName: 'Bob', password: PASSWORD });
     expect(r.status).toBe(422);
     expect(r.body.error.code).toBe('EMAIL_DOMAIN_NOT_ALLOWED');
   });
