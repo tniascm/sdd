@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RoomBook</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <h1>RoomBook</h1>
+    <div id="session-bar" class="session-bar" hidden>
+      <span id="session-user"></span>
+      <button type="button" id="logout-button">Sign out</button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <!-- Signed out: FR-001 register, FR-002 sign in -->
+    <section id="auth-view" aria-labelledby="auth-heading">
+      <h2 id="auth-heading">Sign in or create an account</h2>
+      <div class="columns">
+        <form id="login-form" class="card" novalidate>
+          <h3>Sign in</h3>
+          <p class="form-error" data-error-for="_form"></p>
+          <label for="login-email">University email</label>
+          <input id="login-email" name="email" type="email" autocomplete="username" required>
+          <p class="field-error" data-error-for="email"></p>
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+          <p class="field-error" data-error-for="password"></p>
+          <button type="submit">Sign in</button>
+        </form>
+
+        <form id="register-form" class="card" novalidate>
+          <h3>Create an account</h3>
+          <p class="form-error" data-error-for="_form"></p>
+          <label for="register-email">University email</label>
+          <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+          <p class="field-error" data-error-for="email"></p>
+          <label for="register-name">Display name</label>
+          <input id="register-name" name="displayName" type="text" autocomplete="nickname" maxlength="60" required>
+          <p class="field-error" data-error-for="displayName"></p>
+          <label for="register-password">Password (12–128 characters)</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <p class="field-error" data-error-for="password"></p>
+          <button type="submit">Create account</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Signed in -->
+    <div id="app-view" hidden>
+    </div>
+  </main>
+</body>
+</html>

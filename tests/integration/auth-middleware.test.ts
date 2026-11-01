@@ -1,21 +1,18 @@
 // T018 — bearer session → req.actor; 401 UNAUTHENTICATED / 403 FORBIDDEN (FR-002, FR-003, NFR-003).
-import type { DatabaseSync } from 'node:sqlite';
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AuthService } from '../../src/application/auth-service.ts';
 import type { Repositories } from '../../src/application/ports.ts';
+import { buildContainer, type Container } from '../../src/container.ts';
 import { actorOf, requireAdmin, requireAuth } from '../../src/http/auth-middleware.ts';
 import { createErrorHandler } from '../../src/http/error-handler.ts';
-import { openDatabase } from '../../src/infrastructure/sqlite/database.ts';
-import { createSqliteRepositories } from '../../src/infrastructure/sqlite/repositories.ts';
 import { CryptoTokenService } from '../../src/infrastructure/token-service.ts';
 
 const H = 3_600_000;
 const T0 = Date.parse('2026-11-02T06:00:00.000Z');
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 
-let db: DatabaseSync;
+let container: Container;
 let repos: Repositories;
 let now: number;
 let app: express.Express;
@@ -29,11 +26,19 @@ function session(token: string, over: { expiresAt?: number; revokedAt?: number |
 }
 
 beforeEach(() => {
-  db = openDatabase(':memory:');
-  repos = createSqliteRepositories(db);
   now = T0;
+  container = buildContainer({
+    dbFile: ':memory:',
+    clock: { now: () => now },
+    config: {
+      port: 0, dbFile: ':memory:', timeZone: 'Europe/Helsinki', opensAt: '08:00', closesAt: '22:00',
+      allowedEmailDomains: ['uni.example'], rateLimitPerMinute: 1000, sessionTtlMs: 8 * H, admin: null,
+    },
+    hasherParams: { N: 1024, r: 8, p: 1 },
+  });
+  repos = container.repos;
   repos.users.insert({ id: USER_ID, email: 'alice@uni.example', displayName: 'Alice', role: 'student', createdAt: T0 }, 'scrypt$x');
-  const auth = new AuthService({ users: repos.users, sessions: repos.sessions, tokens, clock: { now: () => now } });
+  const auth = container.auth;
   app = express();
   app.get('/me', requireAuth(auth), (req, res) => {
     res.json(actorOf(req));
@@ -46,7 +51,7 @@ beforeEach(() => {
   });
   app.use(createErrorHandler());
 });
-afterEach(() => db.close());
+afterEach(() => container.close());
 
 const get = (path: string, authorization?: string) => {
   const r = request(app).get(path);

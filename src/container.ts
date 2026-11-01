@@ -46,7 +46,17 @@ export function buildContainer(opts: BuildContainerOptions): Container {
   const hasher = new ScryptHasher(opts.hasherParams);
   const tokens = new CryptoTokenService();
   const audit = new AuditService(repos.auditEvents, clock);
-  const auth = new AuthService({ users: repos.users, sessions: repos.sessions, tokens, clock });
+  const auth = new AuthService({
+    users: repos.users,
+    sessions: repos.sessions,
+    loginFailures: repos.loginFailures,
+    tokens,
+    hasher,
+    clock,
+    uow,
+    audit,
+    config,
+  });
 
   async function bootstrapAdmin(): Promise<void> {
     const admin = config.admin;

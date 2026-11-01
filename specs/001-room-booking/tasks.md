@@ -72,10 +72,10 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] (Implementer) `src/http/schemas.ts` Register/Login schemas (strict): email ≤ 254, "display name (1–60 characters)", "password (12–128 characters, not equal to the email address)"
-- [ ] T023 [US2] (Implementer) `src/application/auth-service.ts`: register (lower-case email; `EMAIL_DOMAIN_NOT_ALLOWED`; `PASSWORD_EQUALS_EMAIL`; `EMAIL_TAKEN`; role student; audit `user.registered`), login (FR-002, FR-004: "5 failed attempts within 15 minutes" → refused "for 15 minutes from the last failure" keyed by SHA-256 of normalised email, also for unknown emails; same `INVALID_CREDENTIALS` for unknown email and wrong password, verifying against a dummy hash for unknown emails; session "expires 8 hours after sign-in"; audit success/failure/lock), logout (revoke; audit)
-- [ ] T024 [US2] (Implementer) `src/http/routes/auth.ts` (`/auth/register`, `/auth/login`, `/auth/logout`) and `src/http/routes/me.ts` (`GET /me`); `429 TOO_MANY_ATTEMPTS` with `Retry-After`
-- [ ] T025 [US2] (Implementer) UI: register / sign-in / sign-out in `public/index.html`, `public/app.js`, `public/styles.css` (no inline scripts or styles; all user text via `textContent`)
+- [X] T022 [US2] (Implementer) `src/http/schemas.ts` Register/Login schemas (strict): email ≤ 254, "display name (1–60 characters)", "password (12–128 characters, not equal to the email address)"
+- [X] T023 [US2] (Implementer) `src/application/auth-service.ts`: register (lower-case email; `EMAIL_DOMAIN_NOT_ALLOWED`; `PASSWORD_EQUALS_EMAIL`; `EMAIL_TAKEN`; role student; audit `user.registered`), login (FR-002, FR-004: "5 failed attempts within 15 minutes" → refused "for 15 minutes from the last failure" keyed by SHA-256 of normalised email, also for unknown emails; same `INVALID_CREDENTIALS` for unknown email and wrong password, verifying against a dummy hash for unknown emails; session "expires 8 hours after sign-in"; audit success/failure/lock), logout (revoke; audit)
+- [X] T024 [US2] (Implementer) `src/http/routes/auth.ts` (`/auth/register`, `/auth/login`, `/auth/logout`) and `src/http/routes/me.ts` (`GET /me`); `429 TOO_MANY_ATTEMPTS` with `Retry-After`
+- [X] T025 [US2] (Implementer) UI: register / sign-in / sign-out in `public/index.html`, `public/app.js`, `public/styles.css` (no inline scripts or styles; all user text via `textContent`)
 
 **Checkpoint**: US2 acceptance tests green.
 

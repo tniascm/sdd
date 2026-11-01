@@ -8,6 +8,9 @@ import helmet from 'helmet';
 import type { Container } from '../container.ts';
 import { apiNotFound, createErrorHandler } from './error-handler.ts';
 import { createRateLimit } from './rate-limit.ts';
+import { adminRoutes } from './routes/admin.ts';
+import { authRoutes } from './routes/auth.ts';
+import { meRoutes } from './routes/me.ts';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../../public/', import.meta.url));
 
@@ -33,7 +36,7 @@ export function createApp(container: Container): express.Express {
   app.use(createRateLimit({ clock: container.clock, limitPerMinute: container.config.rateLimitPerMinute }));
   app.use(express.json({ limit: '10kb' }));
 
-  app.use('/api/v1', apiRouter());
+  app.use('/api/v1', apiRouter(container));
   app.use('/api', apiNotFound);
 
   app.use(express.static(PUBLIC_DIR));
@@ -41,10 +44,13 @@ export function createApp(container: Container): express.Express {
   return app;
 }
 
-function apiRouter(): express.Router {
+function apiRouter(c: Container): express.Router {
   const api = express.Router();
   api.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+  api.use(authRoutes(c));
+  api.use(meRoutes(c));
+  api.use(adminRoutes(c));
   return api;
 }
