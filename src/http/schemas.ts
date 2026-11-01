@@ -94,3 +94,8 @@ export const BookingCreateRequest = z.strictObject({
 export const BookingsMineQuery = z.strictObject({
   include: z.enum(['upcoming', 'all'], 'include must be "upcoming" or "all".').default('upcoming'),
 });
+
+/** FR-015: an administrator's reason, 1–200 characters (required for other people's bookings — a rule). */
+export const CancelRequest = z.strictObject({
+  reason: z.string().trim().min(1, 'Reason must not be empty.').max(200, 'Reason must be at most 200 characters.').optional(),
+});

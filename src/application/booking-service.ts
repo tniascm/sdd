@@ -74,11 +74,33 @@ export class BookingService {
     });
   }
 
+  /**
+   * FR-014: owners cancel their own booking before it starts. Someone else's booking is
+   * answered exactly like a missing one (NFR-003).
+   */
+  cancel(actor: Actor, bookingId: string): BookingView {
+    const { bookings, uow, clock } = this.deps;
+    return uow.transaction(() => {
+      const now = clock.now();
+      const booking = bookings.findById(bookingId);
+      if (!booking || booking.userId !== actor.userId) throw bookingNotFound();
+      if (booking.status === 'cancelled') throw alreadyCancelled();
+      if (booking.start <= now) {
+        throw new DomainError('ALREADY_STARTED', 'This booking has already started and can no longer be cancelled.');
+      }
+      bookings.cancel(booking.id, { at: now, by: 'owner', reason: null });
+      return bookings.findById(booking.id) as BookingView;
+    });
+  }
+
   /** FR-013: own bookings in start order; by default only upcoming ones. */
   listMine(actor: Actor, include: 'upcoming' | 'all' = 'upcoming'): BookingView[] {
     return this.deps.bookings.listByUser(actor.userId, { upcomingOnly: include === 'upcoming', now: this.deps.clock.now() });
   }
 }
+
+const bookingNotFound = () => new DomainError('NOT_FOUND', 'Booking not found.');
+const alreadyCancelled = () => new DomainError('ALREADY_CANCELLED', 'This booking has already been cancelled.');
 
 function slotUnavailable(): DomainError {
   return new DomainError('SLOT_UNAVAILABLE', 'The room is already booked for part of this time.');

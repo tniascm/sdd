@@ -138,8 +138,9 @@
 
       <!-- FR-013 my bookings -->
       <section id="mine-section" aria-labelledby="mine-heading">
-        <h2 id="mine-heading">My bookings</h2>
+        <h2 id="mine-heading" tabindex="-1">My bookings</h2>
         <div class="card">
+          <label class="inline" for="mine-include-all"><input type="checkbox" id="mine-include-all"> Show cancelled and past bookings</label>
           <ul id="mine-list" class="plain" aria-live="polite"></ul>
         </div>
       </section>

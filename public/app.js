@@ -394,24 +394,60 @@ onSubmit($('#booking-form'), async (values, form) => {
 // ------------------------------------------------------------------ my bookings (FR-013)
 
 async function loadMine() {
-  const { bookings } = await api('GET', '/bookings/mine');
-  renderMine(bookings);
+  const includeAll = $('#mine-include-all').checked;
+  const { bookings } = await api('GET', `/bookings/mine${includeAll ? '?include=all' : ''}`);
+  renderMine(bookings, includeAll);
 }
 
-function renderMine(bookings) {
+const CANCELLED_BY_TEXT = { owner: 'by you', admin: 'by an administrator', system: 'by the system' };
+
+function renderMine(bookings, includeAll) {
   const list = $('#mine-list');
   list.replaceChildren();
   if (bookings.length === 0) {
-    list.append(el('li', { className: 'muted', text: 'You have no upcoming bookings.' }));
+    list.append(el('li', { className: 'muted', text: includeAll ? 'You have no bookings.' : 'You have no upcoming bookings.' }));
     return;
   }
+  const now = Date.now();
   for (const b of bookings) {
-    const details = [el('strong', { text: b.roomName }), ' ', formatSlot(b), ` · ${b.partySize} people`];
-    const item = el('li', {}, [el('div', {}, details)]);
+    const ended = Date.parse(b.end) <= now;
+    const status = b.status === 'cancelled' ? 'Cancelled' : ended ? 'Past' : 'Confirmed';
+    const heading = el('div', {}, [
+      el('span', { className: b.status === 'cancelled' ? 'tag cancelled' : 'tag', text: status }),
+      el('strong', { text: b.roomName }), ' ', formatSlot(b), ` · ${b.partySize} people`,
+    ]);
+    const item = el('li', {}, [heading]);
     if (b.purpose) item.append(el('div', { className: 'muted', text: `Purpose: ${b.purpose}` }));
+    if (b.status === 'cancelled') {
+      const who = CANCELLED_BY_TEXT[b.cancelledBy] || '';
+      const reason = b.cancelReason ? ` Reason: ${b.cancelReason}` : '';
+      item.append(el('div', { className: 'muted', text: `Cancelled ${who}.${reason}` }));
+    } else if (Date.parse(b.start) > now) {
+      const button = el('button', { type: 'button', className: 'secondary', text: 'Cancel booking' });
+      button.setAttribute('aria-label', `Cancel booking of ${b.roomName}, ${formatSlot(b)}`);
+      button.addEventListener('click', () => cancelMine(b, button));
+      item.append(button);
+    }
     list.append(item);
   }
 }
+
+async function cancelMine(booking, button) {
+  button.disabled = true;
+  try {
+    await api('POST', `/bookings/${encodeURIComponent(booking.id)}/cancel`);
+    setStatus(`Cancelled ${booking.roomName}: ${formatSlot(booking)}.`);
+    await loadMine();
+    if (state.room && state.room.id === booking.roomId) await loadAvailability();
+    $('#mine-heading').focus();
+  } catch (err) {
+    button.disabled = false;
+    if (err instanceof ApiError) setStatus(err.message, true);
+    else throw err;
+  }
+}
+
+$('#mine-include-all').addEventListener('change', () => loadMine());
 
 signedInHandlers.push(() => {
   loadRooms();

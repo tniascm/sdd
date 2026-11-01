@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { Container } from '../../container.ts';
 import { actorOf, requireAuth } from '../auth-middleware.ts';
 import { bookingDto } from '../presenters.ts';
-import { BookingCreateRequest, BookingsMineQuery } from '../schemas.ts';
+import { BookingCreateRequest, BookingIdParams, BookingsMineQuery, CancelRequest } from '../schemas.ts';
 
 export function bookingRoutes(c: Container): Router {
   const r = Router();
@@ -22,6 +22,12 @@ export function bookingRoutes(c: Container): Router {
   r.get('/bookings/mine', (req, res) => {
     const { include } = BookingsMineQuery.parse(req.query);
     res.json({ bookings: c.bookings.listMine(actorOf(req), include).map(bookingDto) });
+  });
+
+  r.post('/bookings/:bookingId/cancel', (req, res) => {
+    const { bookingId } = BookingIdParams.parse(req.params);
+    CancelRequest.parse(req.body ?? {});
+    res.json(bookingDto(c.bookings.cancel(actorOf(req), bookingId)));
   });
 
   return r;

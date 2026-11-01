@@ -117,8 +117,8 @@ Single project at repository root: `src/`, `tests/`, `public/`, `scripts/` (see 
 
 ### Implementation for User Story 3
 
-- [ ] T037 [US3] (Implementer) `booking-service.cancel` for owners: only before start (`ALREADY_STARTED`), not twice (`ALREADY_CANCELLED`), foreign booking → `NOT_FOUND` exactly like a missing one (FR-014, NFR-003); `cancelledBy: 'owner'`
-- [ ] T038 [US3] (Implementer) route `POST /bookings/{bookingId}/cancel`; UI cancel button and "show cancelled & past" toggle
+- [X] T037 [US3] (Implementer) `booking-service.cancel` for owners: only before start (`ALREADY_STARTED`), not twice (`ALREADY_CANCELLED`), foreign booking → `NOT_FOUND` exactly like a missing one (FR-014, NFR-003); `cancelledBy: 'owner'`
+- [X] T038 [US3] (Implementer) route `POST /bookings/{bookingId}/cancel`; UI cancel button and "show cancelled & past" toggle
 
 ---
 
